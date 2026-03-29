@@ -1,37 +1,13 @@
-import json
-
-from flask import Blueprint, render_template
+from flask import Blueprint, jsonify, render_template
 from flask_login import current_user, login_required
-from markupsafe import Markup
 
+from extensions import db
 from models import CuttingReport, TreeRecord, User
 
 main_bp = Blueprint("main", __name__)
 
 
-@main_bp.route("/")
-def index():
-    total_trees = TreeRecord.query.with_entities(TreeRecord.quantity).all()
-    total_tree_count = sum(item.quantity for item in total_trees)
-    total_reports = CuttingReport.query.count()
-    total_users = User.query.count()
-
-    co2_kg = total_tree_count * 21
-    co2_display = f"{co2_kg} kg"
-    if co2_kg >= 1000:
-        co2_display = f"{co2_kg / 1000:.2f} tonnes"
-
-    return render_template(
-        "home.html",
-        total_trees=total_tree_count,
-        total_reports=total_reports,
-        total_users=total_users,
-        co2_display=co2_display,
-    )
-
-
-@main_bp.route("/map")
-def map_view():
+def build_map_payload() -> dict:
     trees = TreeRecord.query.all()
     reports = CuttingReport.query.all()
 
@@ -58,11 +34,89 @@ def map_view():
         for report in reports
     ]
 
+    return {"trees": trees_json, "reports": reports_json}
+
+
+@main_bp.route("/")
+def index():
+    total_trees = TreeRecord.query.with_entities(TreeRecord.quantity).all()
+    total_tree_count = sum(item.quantity for item in total_trees)
+    total_reports = CuttingReport.query.count()
+    total_users = User.query.count()
+
+    co2_kg = total_tree_count * 21
+    co2_display = f"{co2_kg} kg"
+    if co2_kg >= 1000:
+        co2_display = f"{co2_kg / 1000:.2f} tonnes"
+
+    return render_template(
+        "home.html",
+        total_trees=total_tree_count,
+        total_reports=total_reports,
+        total_users=total_users,
+        co2_display=co2_display,
+    )
+
+
+@main_bp.route("/map")
+def map_view():
+    payload = build_map_payload()
+
     return render_template(
         "map.html",
-        trees_json=Markup(json.dumps(trees_json)),
-        reports_json=Markup(json.dumps(reports_json)),
+        trees_json=payload["trees"],
+        reports_json=payload["reports"],
     )
+
+
+@main_bp.route("/api/map-data")
+def map_data():
+    return jsonify(build_map_payload())
+
+
+@main_bp.route("/leaderboard")
+def leaderboard():
+    tree_totals = dict(
+        db.session.query(TreeRecord.user_id, db.func.sum(TreeRecord.quantity))
+        .group_by(TreeRecord.user_id)
+        .all()
+    )
+    report_counts = dict(
+        db.session.query(CuttingReport.user_id,
+                         db.func.count(CuttingReport.id))
+        .group_by(CuttingReport.user_id)
+        .all()
+    )
+
+    rows = []
+    for user in User.query.filter_by(is_admin=False).all():
+        trees_planted = int(tree_totals.get(user.id, 0) or 0)
+        reports_submitted = int(report_counts.get(user.id, 0) or 0)
+        # Weighted score favors direct environmental action while rewarding reporting.
+        score = trees_planted * 2 + reports_submitted
+        rows.append(
+            {
+                "user": user,
+                "trees_planted": trees_planted,
+                "reports_submitted": reports_submitted,
+                "score": score,
+            }
+        )
+
+    rows.sort(
+        key=lambda item: (
+            item["score"],
+            item["trees_planted"],
+            item["reports_submitted"],
+            item["user"].username.lower(),
+        ),
+        reverse=True,
+    )
+
+    for index, item in enumerate(rows, start=1):
+        item["rank"] = index
+
+    return render_template("leaderboard.html", leaderboard=rows)
 
 
 @main_bp.route("/profile")

@@ -31,17 +31,17 @@
   <script id="trees-data" type="application/json">
     {
       {
-        trees_json
+        trees_json | tojson
       }
     }
   </script>
   <script id="reports-data" type="application/json">
     {
       {
-        reports_json
+        reports_json | tojson
       }
     }
   </script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script src="{{ url_for('static', filename='js/map.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/map.js', v='2') }}"></script>
 {% endblock %}

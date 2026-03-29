@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
     {% block extra_css %}
+
     {% endblock %}
   </head>
   <body>
@@ -29,6 +30,9 @@
             </li>
             <li class="nav-item">
               <a class="nav-link" href="{{ url_for('main.map_view') }}"><i class="fas fa-map"></i> Map</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('main.leaderboard') }}"><i class="fas fa-trophy"></i> Leaderboard</a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="{{ url_for('reports.view_reports') }}"><i class="fas fa-file-alt"></i> Reports</a>
@@ -74,6 +78,7 @@
 
     <main class="gg-main">
       {% block content %}
+
       {% endblock %}
     </main>
 
@@ -93,6 +98,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
     {% block extra_js %}
+
     {% endblock %}
   </body>
 </html>

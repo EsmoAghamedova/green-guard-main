@@ -29,9 +29,6 @@
         }
     }
 
-    const treesData = parseJsonScript("trees-data");
-    const reportsData = parseJsonScript("reports-data");
-
     const map = L.map("map").setView([42.3154, 43.3569], 7);
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -61,7 +58,11 @@
     let userMarker = null;
     let accuracyCircle = null;
 
-    if (Array.isArray(treesData)) {
+    function addTreeMarkers(treesData) {
+        if (!Array.isArray(treesData)) {
+            return;
+        }
+
         treesData.forEach(function (tree) {
             const marker = L.marker([tree.latitude, tree.longitude], { icon: treeIcon }).addTo(map);
             bounds.extend([tree.latitude, tree.longitude]);
@@ -74,7 +75,11 @@
         });
     }
 
-    if (Array.isArray(reportsData)) {
+    function addReportMarkers(reportsData) {
+        if (!Array.isArray(reportsData)) {
+            return;
+        }
+
         reportsData.forEach(function (report) {
             const marker = L.marker([report.latitude, report.longitude], { icon: reportIcon }).addTo(map);
             bounds.extend([report.latitude, report.longitude]);
@@ -82,14 +87,42 @@
                 `<strong>Cutting Report</strong><br>` +
                 `Status: ${report.status}<br>` +
                 `By: ${report.username}<br>` +
-                `${report.description.substring(0, 120)}`
+                `${(report.description || "").substring(0, 120)}`
             );
         });
     }
 
-    if (bounds.isValid()) {
-        map.fitBounds(bounds.pad(0.15));
+    function updateBoundsView() {
+        if (bounds.isValid()) {
+            map.fitBounds(bounds.pad(0.15));
+        }
     }
+
+    async function loadMapData() {
+        try {
+            const response = await fetch("/api/map-data", { cache: "no-store" });
+            if (response.ok) {
+                const payload = await response.json();
+                return {
+                    trees: Array.isArray(payload.trees) ? payload.trees : [],
+                    reports: Array.isArray(payload.reports) ? payload.reports : []
+                };
+            }
+        } catch (error) {
+            // Fallback to template-injected JSON.
+        }
+
+        return {
+            trees: parseJsonScript("trees-data"),
+            reports: parseJsonScript("reports-data")
+        };
+    }
+
+    loadMapData().then(function (data) {
+        addTreeMarkers(data.trees);
+        addReportMarkers(data.reports);
+        updateBoundsView();
+    });
 
     function updateUserLocation(position) {
         const latitude = position.coords.latitude;
