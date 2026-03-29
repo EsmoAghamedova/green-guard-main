@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Reports | Green Guard
+{% endblock %}
+
+{% block content %}
+  <div class="container my-5">
+    <div class="row">
+      <div class="col-12 mb-4">
+        <h1 class="h3">Community Reports</h1>
+        <p class="text-muted mb-0">Latest illegal cutting reports and tree planting records.</p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-lg-7 mb-4">
+        <div class="card shadow-sm h-100">
+          <div class="card-header bg-danger text-white">
+            <h2 class="h5 mb-0">Illegal Cutting Reports</h2>
+          </div>
+          <div class="card-body">
+            {% if reports %}
+              {% for report in reports %}
+                <div class="border rounded p-3 mb-3">
+                  <p class="mb-2">
+                    <strong>Status:</strong> <span class="badge badge-secondary text-uppercase">{{ report.status }}</span>
+                  </p>
+                  <p class="mb-2">{{ report.description }}</p>
+                  <p class="mb-1 small text-muted">By {{ report.user.username }} at {{ report.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                  <p class="mb-0 small text-muted">Coordinates: {{ report.latitude }}, {{ report.longitude }}</p>
+                  {% if report.location_text %}
+                    <p class="mb-0 small text-muted">Location: {{ report.location_text }}</p>
+                  {% endif %}
+                  {% if report.image_filename %}
+                    <a href="{{ url_for('static', filename='uploads/' ~ report.image_filename) }}" target="_blank" class="small">View image</a>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            {% else %}
+              <p class="text-muted mb-0">No cutting reports yet.</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-5 mb-4">
+        <div class="card shadow-sm h-100">
+          <div class="card-header bg-success text-white">
+            <h2 class="h5 mb-0">Tree Planting Records</h2>
+          </div>
+          <div class="card-body">
+            {% if trees %}
+              {% for tree in trees %}
+                <div class="border rounded p-3 mb-3">
+                  <p class="mb-1">
+                    <strong>{{ tree.species }}</strong> x {{ tree.quantity }}
+                  </p>
+                  <p class="mb-1 small text-muted">By {{ tree.user.username }} at {{ tree.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                  <p class="mb-0 small text-muted">Coordinates: {{ tree.latitude }}, {{ tree.longitude }}</p>
+                  {% if tree.location_notes %}
+                    <p class="mb-0 small text-muted">{{ tree.location_notes }}</p>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            {% else %}
+              <p class="text-muted mb-0">No tree records yet.</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

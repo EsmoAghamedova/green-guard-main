@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Admin Dashboard | Green Guard
+{% endblock %}
+
+{% block content %}
+  <div class="container my-5">
+    <div class="row mb-4">
+      <div class="col-12 d-flex justify-content-between align-items-center flex-wrap">
+        <h1 class="h3 mb-2 mb-md-0">Admin Dashboard</h1>
+        <a href="{{ url_for('admin.users') }}" class="btn btn-outline-primary">Manage Users</a>
+      </div>
+    </div>
+
+    <div class="row mb-4">
+      <div class="col-md-4 mb-3">
+        <div class="card h-100 shadow-sm">
+          <div class="card-body text-center">
+            <h2>{{ users|length }}</h2><p class="mb-0">Users</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 mb-3">
+        <div class="card h-100 shadow-sm">
+          <div class="card-body text-center">
+            <h2>{{ tree_records|length }}</h2><p class="mb-0">Tree Records</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 mb-3">
+        <div class="card h-100 shadow-sm">
+          <div class="card-body text-center">
+            <h2>{{ reports|length }}</h2><p class="mb-0">Cutting Reports</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-danger text-white">Cutting Reports</div>
+      <div class="card-body table-responsive">
+        <table class="table table-bordered table-sm mb-0">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>User</th>
+              <th>Description</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for report in reports %}
+              <tr>
+                <td>{{ report.id }}</td>
+                <td>{{ report.user.username }}</td>
+                <td>
+                  {{ report.description[:80] }}{% if report.description|length > 80 %}...{% endif %}
+                </td>
+                <td>
+                  <span class="badge badge-secondary text-uppercase">{{ report.status }}</span>
+                </td>
+                <td>
+                  <form method="POST" action="{{ url_for('admin.update_report_status', report_id=report.id) }}" class="form-inline">
+                    <select name="status" class="form-control form-control-sm mr-2">
+                      {% for status in ['pending', 'reviewed', 'resolved', 'rejected'] %}
+                        {% if status == report.status %}
+                          <option value="{{ status }}" selected>{{ status|title }}</option>
+                        {% else %}
+                          <option value="{{ status }}">{{ status|title }}</option>
+                        {% endif %}
+                      {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                  </form>
+                </td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="5" class="text-center text-muted">No reports found.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-header bg-success text-white">Tree Records</div>
+      <div class="card-body table-responsive">
+        <table class="table table-bordered table-sm mb-0">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>User</th>
+              <th>Species</th>
+              <th>Quantity</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for tree in tree_records %}
+              <tr>
+                <td>{{ tree.id }}</td>
+                <td>{{ tree.user.username }}</td>
+                <td>{{ tree.species }}</td>
+                <td>{{ tree.quantity }}</td>
+                <td>{{ tree.created_at.strftime('%Y-%m-%d') }}</td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="5" class="text-center text-muted">No tree records found.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endblock %}

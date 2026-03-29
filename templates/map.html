@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Map | Green Guard
+{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+{% endblock %}
+
+{% block content %}
+  <div class="container my-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h4 mb-3">Community Environmental Map</h2>
+        <p class="text-muted">Green markers show planted trees. Red markers show reported cutting incidents.</p>
+        <div class="d-flex flex-wrap align-items-center mb-3">
+          <button id="gps-locate-btn" type="button" class="btn btn-outline-primary btn-sm mr-2 mb-2">
+            <i class="fas fa-location-crosshairs mr-1"></i>
+            Use My GPS Location
+          </button>
+          <small id="gps-status" class="text-muted mb-2">Click to center the map on your current location.</small>
+        </div>
+        <div id="map" class="gg-map"></div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+  <script id="trees-data" type="application/json">
+    {
+      {
+        trees_json
+      }
+    }
+  </script>
+  <script id="reports-data" type="application/json">
+    {
+      {
+        reports_json
+      }
+    }
+  </script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="{{ url_for('static', filename='js/map.js') }}"></script>
+{% endblock %}

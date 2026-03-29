@@ -1,0 +1,66 @@
+:root {
+    --gg-green-dark: #1f5c3b;
+    --gg-green-mid: #2f8f57;
+    --gg-green-soft: #e8f5ea;
+    --gg-earth: #8d6e63;
+}
+
+body {
+    background: linear-gradient(180deg, #f7fcf8 0%, #eef7f0 100%);
+    color: #1f2d1f;
+}
+
+.gg-navbar {
+    background: linear-gradient(90deg, var(--gg-green-dark), var(--gg-green-mid));
+}
+
+.gg-main {
+    min-height: 70vh;
+}
+
+.gg-hero {
+    background: linear-gradient(120deg, rgba(31, 92, 59, 0.95), rgba(47, 143, 87, 0.9));
+    color: #fff;
+}
+
+.gg-stat-card {
+    border: 0;
+    border-left: 4px solid var(--gg-green-mid);
+}
+
+.gg-stat-number {
+    color: var(--gg-green-dark);
+    font-weight: 700;
+}
+
+.gg-map {
+    height: 520px;
+    border-radius: 8px;
+    border: 1px solid #dce8dd;
+}
+
+.gg-footer {
+    background: #123322;
+}
+
+.gg-logo {
+    width: 34px;
+    height: 34px;
+    border-radius: 4px;
+    object-fit: cover;
+}
+
+.gg-logo-link:hover {
+    text-decoration: none;
+    opacity: 0.9;
+}
+
+.card {
+    border: 1px solid #e4eee5;
+}
+
+@media (max-width: 767px) {
+    .gg-map {
+        height: 400px;
+    }
+}
