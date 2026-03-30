@@ -13,6 +13,9 @@
             <h2 class="h5 mb-0">Report Illegal Tree Cutting</h2>
           </div>
           <div class="card-body">
+            <div class="alert alert-warning" role="alert">
+              <strong>Photo Safety Rules:</strong> For community safety and privacy, do not upload photos that show identifiable faces, children, license plates, or private home details.
+            </div>
             <form method="POST" enctype="multipart/form-data">
               {{ form.hidden_tag() }}
 
@@ -52,7 +55,16 @@
               <div class="form-group">
                 {{ form.image.label }}
                 {{ form.image(class='form-control-file') }}
+                <small class="form-text text-muted">Share only evidence of tree cutting. Blur or crop identifying details before uploading.</small>
                 {% for error in form.image.errors %}
+                  <small class="text-danger d-block">{{ error }}</small>
+                {% endfor %}
+              </div>
+
+              <div class="form-group form-check">
+                {{ form.privacy_confirm(class='form-check-input') }}
+                {{ form.privacy_confirm.label(class='form-check-label') }}
+                {% for error in form.privacy_confirm.errors %}
                   <small class="text-danger d-block">{{ error }}</small>
                 {% endfor %}
               </div>

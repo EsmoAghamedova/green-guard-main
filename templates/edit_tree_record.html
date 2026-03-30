@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}
-  Plant Trees | Green Guard
+  Edit Tree Record | Green Guard
 {% endblock %}
 
 {% block content %}
@@ -10,12 +10,9 @@
       <div class="col-lg-8">
         <div class="card shadow-sm">
           <div class="card-header bg-success text-white">
-            <h2 class="h5 mb-0">Submit Tree Planting Record</h2>
+            <h1 class="h5 mb-0">Edit Tree Planting Record</h1>
           </div>
           <div class="card-body">
-            <div class="alert alert-warning" role="alert">
-              <strong>Photo Safety Rules:</strong> For community safety and privacy, do not upload photos that show identifiable faces, children, license plates, or private home details.
-            </div>
             <form method="POST" enctype="multipart/form-data">
               {{ form.hidden_tag() }}
 
@@ -63,7 +60,9 @@
               <div class="form-group">
                 {{ form.image.label }}
                 {{ form.image(class='form-control-file') }}
-                <small class="form-text text-muted">Upload only environmental evidence. Blur or crop identifying details before uploading.</small>
+                {% if tree.image_filename %}
+                  <small class="d-block text-muted mt-1">Current image is kept unless you upload a new one.</small>
+                {% endif %}
                 {% for error in form.image.errors %}
                   <small class="text-danger d-block">{{ error }}</small>
                 {% endfor %}
@@ -77,7 +76,10 @@
                 {% endfor %}
               </div>
 
-              {{ form.submit(class='btn btn-success') }}
+              <div class="d-flex flex-wrap">
+                {{ form.submit(class='btn btn-success mr-2 mb-2') }}
+                <a href="{{ url_for('reports.tree_detail', tree_id=tree.id) }}" class="btn btn-outline-secondary mb-2">Cancel</a>
+              </div>
             </form>
           </div>
         </div>

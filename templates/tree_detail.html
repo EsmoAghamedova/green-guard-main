@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Tree Planting Details | Green Guard
+{% endblock %}
+
+{% block content %}
+  <div class="container my-5">
+    <div class="mb-3">
+      <a href="{{ url_for('reports.trees_gallery') }}" class="btn btn-outline-secondary">Back to Trees Gallery</a>
+    </div>
+
+    <div class="card shadow-sm">
+      {% if tree.image_filename %}
+        <img src="{{ url_for('static', filename='uploads/' ~ tree.image_filename) }}" class="card-img-top gg-detail-image" alt="Tree planting image" />
+      {% endif %}
+
+      <div class="card-body">
+        <h1 class="h4 mb-3">Tree Planting Record #{{ tree.id }}</h1>
+        {% if current_user.is_authenticated and current_user.id == tree.user_id or current_user.is_admin %}
+          <div class="d-flex flex-wrap mb-3">
+            <a href="{{ url_for('reports.edit_tree_record', tree_id=tree.id) }}" class="btn btn-outline-primary btn-sm mr-2 mb-2">Edit</a>
+            <form method="POST" action="{{ url_for('reports.delete_tree_record', tree_id=tree.id) }}" class="mb-2">
+              {{ delete_form.hidden_tag() }}
+              <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Delete this tree record?')">Delete</button>
+            </form>
+          </div>
+        {% endif %}
+        <p class="mb-2">
+          <strong>Species:</strong> {{ tree.species }}
+        </p>
+        <p class="mb-3">
+          <strong>Quantity:</strong> {{ tree.quantity }}
+        </p>
+        <p class="mb-1 text-muted">
+          <strong>Submitted by:</strong> {{ tree.user.username }}
+        </p>
+        <p class="mb-1 text-muted">
+          <strong>Date:</strong> {{ tree.created_at.strftime('%Y-%m-%d %H:%M') }}
+        </p>
+        <p class="mb-1 text-muted">
+          <strong>Coordinates:</strong> {{ tree.latitude }}, {{ tree.longitude }}
+        </p>
+        {% if tree.location_notes %}
+          <p class="mb-0 text-muted">
+            <strong>Location notes:</strong> {{ tree.location_notes }}
+          </p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

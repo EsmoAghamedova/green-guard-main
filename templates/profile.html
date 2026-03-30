@@ -10,6 +10,7 @@
       <div class="col-12 mb-3">
         <h1 class="h3">Welcome, {{ current_user.username }}</h1>
         <p class="text-muted mb-0">Track your environmental contributions.</p>
+        <a href="{{ url_for('auth.settings') }}" class="btn btn-outline-primary btn-sm mt-3">Open Account Settings</a>
       </div>
     </div>
 
@@ -24,7 +25,15 @@
                   <p class="mb-1">
                     <strong>{{ tree.species }}</strong> x {{ tree.quantity }}
                   </p>
-                  <p class="mb-0 small text-muted">{{ tree.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                  <p class="mb-2 small text-muted">{{ tree.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                  <div class="d-flex flex-wrap">
+                    <a href="{{ url_for('reports.tree_detail', tree_id=tree.id) }}" class="btn btn-sm btn-outline-secondary mr-2 mb-2">View</a>
+                    <a href="{{ url_for('reports.edit_tree_record', tree_id=tree.id) }}" class="btn btn-sm btn-outline-primary mr-2 mb-2">Edit</a>
+                    <form method="POST" action="{{ url_for('reports.delete_tree_record', tree_id=tree.id) }}" class="mb-2">
+                      {{ delete_form.hidden_tag() }}
+                      <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this tree record?')">Delete</button>
+                    </form>
+                  </div>
                 </div>
               {% endfor %}
             {% else %}
@@ -45,7 +54,15 @@
                   <p class="mb-1 small text-muted">
                     Status: <span class="text-uppercase">{{ report.status }}</span>
                   </p>
-                  <p class="mb-0 small text-muted">{{ report.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                  <p class="mb-2 small text-muted">{{ report.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                  <div class="d-flex flex-wrap">
+                    <a href="{{ url_for('reports.cutting_detail', report_id=report.id) }}" class="btn btn-sm btn-outline-secondary mr-2 mb-2">View</a>
+                    <a href="{{ url_for('reports.edit_cutting_report', report_id=report.id) }}" class="btn btn-sm btn-outline-primary mr-2 mb-2">Edit</a>
+                    <form method="POST" action="{{ url_for('reports.delete_cutting_report', report_id=report.id) }}" class="mb-2">
+                      {{ delete_form.hidden_tag() }}
+                      <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this cutting report?')">Delete</button>
+                    </form>
+                  </div>
                 </div>
               {% endfor %}
             {% else %}

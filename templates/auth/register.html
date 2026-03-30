@@ -32,7 +32,8 @@
 
               <div class="form-group">
                 {{ form.password.label }}
-                {{ form.password(class='form-control') }}
+                {{ form.password(class='form-control', minlength='8', maxlength='128', autocomplete='new-password') }}
+                <small class="form-text text-muted">Use at least 8 characters with uppercase, lowercase, number, and special character. Spaces are not allowed.</small>
                 {% for error in form.password.errors %}
                   <small class="text-danger d-block">{{ error }}</small>
                 {% endfor %}
@@ -40,7 +41,7 @@
 
               <div class="form-group">
                 {{ form.confirm_password.label }}
-                {{ form.confirm_password(class='form-control') }}
+                {{ form.confirm_password(class='form-control', autocomplete='new-password') }}
                 {% for error in form.confirm_password.errors %}
                   <small class="text-danger d-block">{{ error }}</small>
                 {% endfor %}

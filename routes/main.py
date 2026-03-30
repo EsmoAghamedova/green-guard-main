@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, render_template
 from flask_login import current_user, login_required
 
 from extensions import db
+from forms import DeleteForm
 from models import CuttingReport, TreeRecord, User
 
 main_bp = Blueprint("main", __name__)
@@ -132,4 +133,5 @@ def profile():
         .order_by(CuttingReport.created_at.desc())
         .all()
     )
-    return render_template("profile.html", user_trees=user_trees, user_reports=user_reports)
+    delete_form = DeleteForm()
+    return render_template("profile.html", user_trees=user_trees, user_reports=user_reports, delete_form=delete_form)
