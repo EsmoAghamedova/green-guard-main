@@ -5,53 +5,53 @@
 {% endblock %}
 
 {% block content %}
-  <section class="gg-hero py-5">
-    <div class="container">
-      <div class="row align-items-center">
-        <div class="col-lg-8">
-          <h1 class="display-4 font-weight-bold mb-3">Protect Forests. Grow Community.</h1>
-          <p class="lead mb-4">Green Guard helps citizens plant trees, report illegal cutting, and track collective environmental impact.</p>
-          <a href="{{ url_for('reports.plant_tree') }}" class="btn btn-success mr-2 mb-2">Plant Trees</a>
-          <a href="{{ url_for('reports.report_cutting') }}" class="btn btn-outline-light mb-2">Report Cutting</a>
+  <section class="mx-auto mt-8 w-full max-w-6xl px-4 sm:px-6">
+    <div class="gg-hero relative overflow-hidden rounded-3xl p-8 sm:p-12">
+      <div class="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-xl"></div>
+      <div class="absolute -bottom-16 -left-12 h-44 w-44 rounded-full bg-emerald-100/20 blur-lg"></div>
+      <div class="relative max-w-3xl">
+        <p class="mb-4 inline-flex rounded-full border border-white/35 bg-white/10 px-4 py-1 text-sm font-medium tracking-wide text-emerald-50">CITIZEN FOREST ACTION</p>
+        <h1 class="mb-4 text-4xl font-extrabold leading-tight text-white sm:text-5xl">Protect Forests. Grow Community.</h1>
+        <p class="mb-7 text-base text-emerald-50 sm:text-lg">Green Guard helps citizens plant trees, report illegal cutting, and track collective environmental impact.</p>
+        <div class="flex flex-wrap gap-3">
+          <a href="{{ url_for('reports.plant_tree') }}" class="inline-flex items-center rounded-xl bg-white px-5 py-3 font-semibold text-emerald-800 shadow-soft transition hover:-translate-y-0.5 hover:bg-emerald-50">Plant Trees</a>
+          <a href="{{ url_for('reports.report_cutting') }}" class="inline-flex items-center rounded-xl border border-white/60 bg-white/10 px-5 py-3 font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/20">Report Cutting</a>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="container my-5">
-    <div class="row">
-      <div class="col-md-3 mb-3">
-        <div class="card gg-stat-card h-100">
-          <div class="card-body text-center">
-            <h2 class="gg-stat-number">{{ total_trees }}</h2>
-            <p class="mb-0">Trees Planted</p>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3 mb-3">
-        <div class="card gg-stat-card h-100">
-          <div class="card-body text-center">
-            <h2 class="gg-stat-number">{{ total_reports }}</h2>
-            <p class="mb-0">Cutting Reports</p>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3 mb-3">
-        <div class="card gg-stat-card h-100">
-          <div class="card-body text-center">
-            <h2 class="gg-stat-number">{{ total_users }}</h2>
-            <p class="mb-0">Community Members</p>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3 mb-3">
-        <div class="card gg-stat-card h-100">
-          <div class="card-body text-center">
-            <h2 class="gg-stat-number">{{ co2_display }}</h2>
-            <p class="mb-0">Estimated CO2 Saved</p>
-          </div>
-        </div>
-      </div>
+  <section class="mx-auto my-10 grid w-full max-w-6xl grid-cols-1 gap-4 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
+    <div class="gg-stat-card rounded-2xl bg-white p-6">
+      <p class="mb-1 text-sm font-medium text-slate-500">Trees Planted</p>
+      <h2 class="gg-stat-number text-3xl">{{ total_trees }}</h2>
+    </div>
+    <div class="gg-stat-card rounded-2xl bg-white p-6">
+      <p class="mb-1 text-sm font-medium text-slate-500">Cutting Reports</p>
+      <h2 class="gg-stat-number text-3xl">{{ total_reports }}</h2>
+    </div>
+    <div class="gg-stat-card rounded-2xl bg-white p-6">
+      <p class="mb-1 text-sm font-medium text-slate-500">Community Members</p>
+      <h2 class="gg-stat-number text-3xl">{{ total_users }}</h2>
+    </div>
+    <div class="gg-stat-card rounded-2xl bg-white p-6">
+      <p class="mb-1 text-sm font-medium text-slate-500">Estimated CO2 Saved</p>
+      <h2 class="gg-stat-number text-3xl">{{ co2_display }}</h2>
+    </div>
+  </section>
+
+  <section class="mx-auto mb-14 grid w-full max-w-6xl grid-cols-1 gap-4 px-4 sm:px-6 md:grid-cols-3">
+    <div class="rounded-2xl border border-emerald-100 bg-white p-6 shadow-soft">
+      <h3 class="mb-2 text-lg font-semibold text-emerald-900">Map Tracking</h3>
+      <p class="text-sm text-slate-600">Visualize planted trees and reports live on the shared city map.</p>
+    </div>
+    <div class="rounded-2xl border border-emerald-100 bg-white p-6 shadow-soft">
+      <h3 class="mb-2 text-lg font-semibold text-emerald-900">Community Ranking</h3>
+      <p class="text-sm text-slate-600">Earn impact points and climb the leaderboard through verified actions.</p>
+    </div>
+    <div class="rounded-2xl border border-emerald-100 bg-white p-6 shadow-soft">
+      <h3 class="mb-2 text-lg font-semibold text-emerald-900">Actionable Reports</h3>
+      <p class="text-sm text-slate-600">Flag illegal cutting quickly so it can be reviewed and resolved faster.</p>
     </div>
   </section>
 {% endblock %}

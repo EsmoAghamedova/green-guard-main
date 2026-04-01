@@ -1,14 +1,8 @@
-"""
-Seed test data for Green Guard application - Trees and Reports in Tbilisi, Georgia
-Run with: python seed_test_data.py
-"""
-
 from app import app
 from extensions import db
 from models import User, TreeRecord, CuttingReport
 from datetime import datetime, timedelta, timezone
 
-# Tbilisi coordinates and surrounding areas
 TBILISI_LOCATIONS = [
     {
         "name": "Mtkvari River Park",
@@ -54,7 +48,6 @@ TREE_SPECIES = [
 
 def seed_database():
     with app.app_context():
-        # Get or create admin user
         admin = User.query.filter_by(username="admin").first()
         if not admin:
             print("❌ Admin user not found!")
@@ -62,13 +55,11 @@ def seed_database():
 
         print(f"✅ Found admin user: {admin.username}")
 
-        # Clear existing test data
         TreeRecord.query.delete()
         CuttingReport.query.delete()
         db.session.commit()
         print("🧹 Cleared existing test data")
 
-        # Add test trees
         print("\n🌳 Adding test trees...")
         for i, (species, quantity) in enumerate(TREE_SPECIES):
             location = TBILISI_LOCATIONS[i % len(TBILISI_LOCATIONS)]
@@ -86,7 +77,6 @@ def seed_database():
 
         db.session.commit()
 
-        # Add test reports
         print("\n⚠️  Adding test cutting reports...")
         test_reports = [
             {
@@ -131,7 +121,6 @@ def seed_database():
 
         db.session.commit()
 
-        # Print summary
         tree_count = TreeRecord.query.count()
         report_count = CuttingReport.query.count()
         total_trees = db.session.query(

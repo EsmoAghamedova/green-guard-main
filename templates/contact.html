@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Contact Us | Green Guard
+{% endblock %}
+
+{% block content %}
+  <section class="mx-auto my-10 w-full max-w-6xl px-4 sm:px-6">
+    <h1 class="gg-contact-brand mb-4 text-3xl">Green Guard</h1>
+
+    <div class="gg-contact-wrapper grid grid-cols-1 gap-6 lg:grid-cols-[1.4fr_1fr]">
+      <div class="gg-contact-card rounded-3xl border border-emerald-100 bg-white p-8 shadow-soft">
+        <h2 class="mb-5 text-2xl font-semibold text-slate-800">Send a Message</h2>
+        <form method="POST" novalidate>
+          {{ form.hidden_tag() }}
+
+          <div class="mb-4">
+            {{ form.full_name(class_='gg-contact-input w-full rounded-xl border border-emerald-100 bg-slate-50 px-4 py-3 text-slate-700 outline-none transition focus:border-emerald-300 focus:ring-4 focus:ring-emerald-100', placeholder='Full Name') }}
+            {% for error in form.full_name.errors %}
+              <small class="mt-1 block text-sm text-rose-600">{{ error }}</small>
+            {% endfor %}
+          </div>
+
+          <div class="mb-4">
+            {{ form.email(class_='gg-contact-input w-full rounded-xl border border-emerald-100 bg-slate-50 px-4 py-3 text-slate-700 outline-none transition focus:border-emerald-300 focus:ring-4 focus:ring-emerald-100', placeholder='Email Address') }}
+            {% for error in form.email.errors %}
+              <small class="mt-1 block text-sm text-rose-600">{{ error }}</small>
+            {% endfor %}
+          </div>
+
+          <div class="mb-5">
+            {{ form.message(class_='gg-contact-input gg-contact-textarea w-full rounded-xl border border-emerald-100 bg-slate-50 px-4 py-3 text-slate-700 outline-none transition focus:border-emerald-300 focus:ring-4 focus:ring-emerald-100', placeholder='Message example...') }}
+            {% for error in form.message.errors %}
+              <small class="mt-1 block text-sm text-rose-600">{{ error }}</small>
+            {% endfor %}
+          </div>
+
+          <button type="submit" class="gg-contact-submit inline-flex w-full items-center justify-center rounded-xl bg-gg-forest px-4 py-3 text-sm font-bold uppercase tracking-widest text-white transition hover:-translate-y-0.5 hover:bg-gg-deep">Submit Message</button>
+        </form>
+      </div>
+
+      <aside class="gg-contact-info-card rounded-3xl border border-emerald-100 bg-white p-8 shadow-soft">
+        <h2 class="mb-6 text-2xl font-semibold text-slate-800">Direct Contact</h2>
+
+        <div class="gg-contact-item">
+          <span class="gg-contact-icon"><i class="fas fa-map-marker-alt"></i></span>
+          <p class="mb-0 text-slate-700">
+            123 Street<br />Tbilisi, Georgia 94612
+          </p>
+        </div>
+
+        <div class="gg-contact-item">
+          <span class="gg-contact-icon"><i class="fas fa-phone-alt"></i></span>
+          <p class="mb-0 text-slate-700">+1 (510) 555-0199</p>
+        </div>
+
+        <div class="gg-contact-item">
+          <span class="gg-contact-icon"><i class="fas fa-envelope"></i></span>
+          <p class="mb-0 text-slate-700">technovation.forestrangers@gmail.com</p>
+        </div>
+
+        <div class="gg-contact-socials">
+          <div class="gg-contact-social-row">
+            <span class="gg-contact-circle">f</span> Forest Rangers
+          </div>
+          <div class="gg-contact-social-row">
+            <span class="gg-contact-circle">ig</span> Forest Rangers
+          </div>
+          <div class="gg-contact-social-row">
+            <span class="gg-contact-circle">in</span> Forest Rangers
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <p class="gg-contact-footer mb-0 mt-6 text-sm text-slate-500">Green Guard © 2026. Protecting our environment.</p>
+  </section>
+{% endblock %}

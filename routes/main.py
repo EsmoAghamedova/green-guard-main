@@ -1,8 +1,8 @@
-from flask import Blueprint, jsonify, render_template
+from flask import Blueprint, flash, jsonify, redirect, render_template, url_for
 from flask_login import current_user, login_required
 
 from extensions import db
-from forms import DeleteForm
+from forms import ContactForm, DeleteForm
 from models import CuttingReport, TreeRecord, User
 
 main_bp = Blueprint("main", __name__)
@@ -93,7 +93,6 @@ def leaderboard():
     for user in User.query.filter_by(is_admin=False).all():
         trees_planted = int(tree_totals.get(user.id, 0) or 0)
         reports_submitted = int(report_counts.get(user.id, 0) or 0)
-        # Weighted score favors direct environmental action while rewarding reporting.
         score = trees_planted * 2 + reports_submitted
         rows.append(
             {
@@ -118,6 +117,17 @@ def leaderboard():
         item["rank"] = index
 
     return render_template("leaderboard.html", leaderboard=rows)
+
+
+@main_bp.route("/contact", methods=["GET", "POST"])
+def contact():
+    form = ContactForm()
+
+    if form.validate_on_submit():
+        flash("Thank you for contacting Green Guard. We received your message.", "success")
+        return redirect(url_for("main.contact"))
+
+    return render_template("contact.html", form=form)
 
 
 @main_bp.route("/profile")

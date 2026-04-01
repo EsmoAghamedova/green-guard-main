@@ -175,3 +175,13 @@ class AccountSettingsForm(FlaskForm):
 
 class DeleteForm(FlaskForm):
     submit = SubmitField("Delete")
+
+
+class ContactForm(FlaskForm):
+    full_name = StringField("Full Name", validators=[
+                            InputRequired(), Length(min=2, max=120)])
+    email = StringField("Email Address", validators=[
+                        InputRequired(), Email(), Length(max=120)])
+    message = TextAreaField("Message", validators=[
+                            InputRequired(), Length(min=10, max=1000)])
+    submit = SubmitField("Submit")

@@ -109,7 +109,6 @@
                 };
             }
         } catch (error) {
-            // Fallback to template-injected JSON.
         }
 
         return {
