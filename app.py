@@ -1,6 +1,7 @@
 import os
 
-from flask import Flask
+from flask import Flask, flash, redirect, request, url_for
+from flask_login import current_user
 from werkzeug.security import generate_password_hash
 from extensions import db, login_manager
 
@@ -46,6 +47,27 @@ def create_app() -> Flask:
     app.register_blueprint(reports_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(volunteer_bp)
+
+    @app.before_request
+    def restrict_admin_navigation():
+        if not current_user.is_authenticated or not current_user.is_admin:
+            return None
+
+        allowed_endpoints = {
+            "admin.dashboard",
+            "admin.money",
+            "main.profile",
+            "auth.settings",
+            "auth.logout",
+            "static",
+        }
+        endpoint = request.endpoint
+        if endpoint in allowed_endpoints:
+            return None
+
+        if endpoint:
+            flash("Admin access is limited to Dashboard, Finance, Profile, and Settings.", "warning")
+        return redirect(url_for("admin.dashboard"))
 
     with app.app_context():
         from models import User

@@ -46,7 +46,7 @@
     <div class="min-h-screen md:flex">
       <aside class="gg-sidebar z-40 border-b border-white/20 bg-gradient-to-b from-gg-forest via-gg-moss to-emerald-500 shadow-lg md:sticky md:top-0 md:h-screen md:w-72 md:shrink-0 md:border-b-0 md:border-r">
         <div class="flex items-center justify-between px-4 py-4 sm:px-6 md:justify-start">
-          <a class="inline-flex items-center gap-2 text-white" href="{{ url_for('main.index') }}">
+          <a class="inline-flex items-center gap-2 text-white" href="{{ url_for('admin.dashboard') if current_user.is_authenticated and current_user.is_admin else url_for('main.index') }}">
             <img src="{{ url_for('static', filename='images/green-guard-logo.png') }}" alt="Green Guard logo" class="h-10 w-10 rounded-full object-cover object-top" />
             <strong class="text-lg tracking-wide">Green Guard</strong>
           </a>
@@ -54,7 +54,23 @@
         </div>
         <div id="menuPanel" class="hidden px-3 pb-4 md:block md:px-4 md:pb-6">
           <ul class="flex flex-col gap-2">
-            {% if not current_user.is_authenticated %}
+            {% if current_user.is_authenticated and current_user.is_admin %}
+              <li>
+                <a class="gg-nav-link" href="{{ url_for('admin.dashboard') }}"><i class="fas fa-cog"></i> Dashboard</a>
+              </li>
+              <li>
+                <a class="gg-nav-link" href="{{ url_for('admin.money') }}"><i class="fas fa-chart-pie"></i> Finance</a>
+              </li>
+              <li>
+                <a class="gg-nav-link" href="{{ url_for('main.profile') }}"><i class="fas fa-user"></i> Profile</a>
+              </li>
+              <li>
+                <a class="gg-nav-link" href="{{ url_for('auth.settings') }}"><i class="fas fa-sliders-h"></i> Settings</a>
+              </li>
+              <li>
+                <a class="gg-nav-link" href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+              </li>
+            {% elif not current_user.is_authenticated %}
               <li>
                 <a class="gg-nav-link" href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a>
               </li>
@@ -141,7 +157,7 @@
               {% endif %}
             {% endif %}
 
-            {% if current_user.is_authenticated %}
+            {% if current_user.is_authenticated and not current_user.is_admin %}
               {% if current_user.role != 'business' %}
                 <li>
                   <a class="gg-nav-link" href="{{ url_for('reports.plant_tree_campaign') }}"><i class="fas fa-seedling"></i> Fund Campaigns</a>
@@ -153,15 +169,10 @@
               <li>
                 <a class="gg-nav-link" href="{{ url_for('auth.settings') }}"><i class="fas fa-sliders-h"></i> Settings</a>
               </li>
-              {% if current_user.is_admin %}
-                <li>
-                  <a class="gg-nav-link text-amber-300" href="{{ url_for('admin.dashboard') }}"><i class="fas fa-cog"></i> Admin</a>
-                </li>
-              {% endif %}
               <li>
                 <a class="gg-nav-link" href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
               </li>
-            {% else %}
+            {% elif not current_user.is_authenticated %}
               <li>
                 <a class="gg-nav-link" href="{{ url_for('auth.login') }}"><i class="fas fa-sign-in-alt"></i> Login</a>
               </li>

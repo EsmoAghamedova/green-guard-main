@@ -1,4 +1,5 @@
 from functools import wraps
+from collections import defaultdict
 
 from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
@@ -110,3 +111,78 @@ def update_campaign_status(campaign_id):
     db.session.commit()
     flash("Campaign status updated.", "success")
     return redirect(url_for("admin.dashboard"))
+
+
+@admin_bp.route("/admin/money")
+@login_required
+@admin_required
+def money():
+    sponsor_donations = SupportDonation.query.order_by(
+        SupportDonation.created_at.desc()).all()
+
+    total_donation_volume = 0.0
+    total_commission_earned = 0.0
+    total_project_allocation = 0.0
+    rows = []
+    commission_by_rate = defaultdict(float)
+    commission_by_sponsor = defaultdict(float)
+
+    for donation in sponsor_donations:
+        amount = float(donation.amount)
+        if amount < 1000:
+            commission_rate = 0.05
+        elif amount < 5000:
+            commission_rate = 0.10
+        else:
+            commission_rate = 0.15
+
+        commission_amount = amount * commission_rate
+        project_allocation = amount - commission_amount
+
+        total_donation_volume += amount
+        total_commission_earned += commission_amount
+        total_project_allocation += project_allocation
+
+        commission_rate_label = f"{int(commission_rate * 100)}%"
+        commission_by_rate[commission_rate_label] += commission_amount
+        commission_by_sponsor[donation.user.username] += commission_amount
+
+        rows.append(
+            {
+                "id": donation.id,
+                "sponsor_name": donation.user.username,
+                "category": donation.category,
+                "amount": amount,
+                "rate_label": commission_rate_label,
+                "commission_amount": commission_amount,
+                "project_allocation": project_allocation,
+                "created_at_text": donation.created_at.strftime("%Y-%m-%d %H:%M"),
+            }
+        )
+
+    top_sponsor_commissions = sorted(
+        commission_by_sponsor.items(),
+        key=lambda item: item[1],
+        reverse=True,
+    )[:10]
+
+    rate_breakdown_rows = [
+        {
+            "rate": rate,
+            "commission_total": total,
+        }
+        for rate, total in sorted(
+            commission_by_rate.items(),
+            key=lambda item: int(item[0].replace("%", "")),
+        )
+    ]
+
+    return render_template(
+        "admin/money.html",
+        total_donation_volume=total_donation_volume,
+        total_commission_earned=total_commission_earned,
+        total_project_allocation=total_project_allocation,
+        rows=rows,
+        rate_breakdown_rows=rate_breakdown_rows,
+        top_sponsor_commissions=top_sponsor_commissions,
+    )
