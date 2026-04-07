@@ -1,14 +1,13 @@
 import os
 import uuid
 
-from flask import Blueprint, abort, current_app, flash, redirect, render_template, url_for
+from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 from werkzeug.utils import secure_filename
 
 from extensions import db
-from forms import CuttingReportEditForm, CuttingReportForm, DeleteForm, PlantTreeForm, TreeRecordEditForm
-from models import CuttingReport, TreeRecord
-
+from forms import CampaignPlantTreeForm, CuttingReportEditForm, CuttingReportForm, DeleteForm, PlantTreeForm, TreeRecordEditForm
+from models import Campaign, CuttingReport, TreeRecord, VolunteerCampaignSignup
 reports_bp = Blueprint("reports", __name__)
 
 
@@ -42,18 +41,33 @@ def ensure_owner_or_admin(owner_user_id: int) -> None:
         abort(403)
 
 
+def parse_form_coordinates(form) -> tuple[float | None, float | None]:
+    latitude_value = form.latitude.data
+    longitude_value = form.longitude.data
+
+    if latitude_value is None or longitude_value is None:
+        return None, None
+
+    return float(latitude_value), float(longitude_value)
+
+
 @reports_bp.route("/plant", methods=["GET", "POST"])
 @login_required
 def plant_tree():
     form = PlantTreeForm()
     if form.validate_on_submit():
+        latitude, longitude = parse_form_coordinates(form)
+        if latitude is None or longitude is None:
+            flash("Please provide a valid location (latitude and longitude).", "warning")
+            return render_template("plant_tree.html", form=form)
+
         image_filename = save_uploaded_image(form.image)
 
         record = TreeRecord(
             species=form.species.data.strip(),
             quantity=form.quantity.data,
-            latitude=float(form.latitude.data),
-            longitude=float(form.longitude.data),
+            latitude=latitude,
+            longitude=longitude,
             location_notes=form.location_notes.data.strip(
             ) if form.location_notes.data else None,
             image_filename=image_filename,
@@ -67,24 +81,86 @@ def plant_tree():
     return render_template("plant_tree.html", form=form)
 
 
+@reports_bp.route("/plant/campaign", methods=["GET", "POST"])
+@login_required
+def plant_tree_campaign():
+    form = CampaignPlantTreeForm()
+
+    joined_signups = VolunteerCampaignSignup.query.filter_by(
+        user_id=current_user.id
+    ).all()
+    joined_campaign_ids = [signup.campaign_id for signup in joined_signups]
+    joined_campaigns = Campaign.query.filter(
+        Campaign.id.in_(joined_campaign_ids)
+    ).order_by(Campaign.event_date.asc()).all() if joined_campaign_ids else []
+
+    form.campaign_id.choices = [
+        (campaign.id,
+         f"{campaign.title} ({campaign.event_date.strftime('%Y-%m-%d')})")
+        for campaign in joined_campaigns
+    ]
+
+    requested_campaign_id = request.args.get("campaign_id", "").strip()
+    if requested_campaign_id.isdigit():
+        requested_campaign_id_int = int(requested_campaign_id)
+        valid_campaign_ids = {choice[0] for choice in form.campaign_id.choices}
+        if requested_campaign_id_int in valid_campaign_ids:
+            form.campaign_id.data = requested_campaign_id_int
+
+    if not form.campaign_id.choices:
+        flash("Join a campaign first, then submit planted trees.", "warning")
+        return redirect(url_for("main.explore", tab="campaigns"))
+
+    if form.validate_on_submit():
+        latitude, longitude = parse_form_coordinates(form)
+        if latitude is None or longitude is None:
+            flash("Please provide a valid location (latitude and longitude).", "warning")
+            return render_template("plant_tree_campaign.html", form=form)
+
+        image_filename = save_uploaded_image(form.image)
+
+        record = TreeRecord(
+            species=form.species.data.strip(),
+            quantity=form.quantity.data,
+            latitude=latitude,
+            longitude=longitude,
+            location_notes=form.location_notes.data.strip(
+            ) if form.location_notes.data else None,
+            image_filename=image_filename,
+            user_id=current_user.id,
+            campaign_id=form.campaign_id.data,
+        )
+        db.session.add(record)
+        db.session.commit()
+        flash("Campaign planting uploaded. It now appears on the map.", "success")
+        return redirect(url_for("main.explore", tab="map"))
+
+    return render_template("plant_tree_campaign.html", form=form)
+
+
 @reports_bp.route("/report", methods=["GET", "POST"])
 @login_required
 def report_cutting():
     form = CuttingReportForm()
     if form.validate_on_submit():
+        latitude, longitude = parse_form_coordinates(form)
+        if latitude is None or longitude is None:
+            flash("Please provide a valid location (latitude and longitude).", "warning")
+            return render_template("report_cutting.html", form=form)
+
         image_filename = save_uploaded_image(form.image)
 
         report = CuttingReport(
             description=form.description.data.strip(),
-            latitude=float(form.latitude.data),
-            longitude=float(form.longitude.data),
+            latitude=latitude,
+            longitude=longitude,
             location_text=form.location_text.data.strip() if form.location_text.data else None,
             image_filename=image_filename,
             user_id=current_user.id,
         )
         db.session.add(report)
         db.session.commit()
-        flash("Cutting report submitted. Thank you for helping protect nature.", "success")
+        flash("Report submitted and queued for verification. It will appear on the map after review.", "success")
         return redirect(url_for("reports.cutting_gallery"))
 
     return render_template("report_cutting.html", form=form)
@@ -132,12 +208,17 @@ def edit_cutting_report(report_id):
 
     form = CuttingReportEditForm(obj=report)
     if form.validate_on_submit():
+        latitude, longitude = parse_form_coordinates(form)
+        if latitude is None or longitude is None:
+            flash("Please provide a valid location (latitude and longitude).", "warning")
+            return render_template("edit_cutting_report.html", form=form, report=report)
+
         old_image = report.image_filename
         new_image = save_uploaded_image(form.image)
 
         report.description = form.description.data.strip()
-        report.latitude = float(form.latitude.data)
-        report.longitude = float(form.longitude.data)
+        report.latitude = latitude
+        report.longitude = longitude
         report.location_text = form.location_text.data.strip(
         ) if form.location_text.data else None
 
@@ -178,13 +259,18 @@ def edit_tree_record(tree_id):
 
     form = TreeRecordEditForm(obj=tree)
     if form.validate_on_submit():
+        latitude, longitude = parse_form_coordinates(form)
+        if latitude is None or longitude is None:
+            flash("Please provide a valid location (latitude and longitude).", "warning")
+            return render_template("edit_tree_record.html", form=form, tree=tree)
+
         old_image = tree.image_filename
         new_image = save_uploaded_image(form.image)
 
         tree.species = form.species.data.strip()
         tree.quantity = form.quantity.data
-        tree.latitude = float(form.latitude.data)
-        tree.longitude = float(form.longitude.data)
+        tree.latitude = latitude
+        tree.longitude = longitude
         tree.location_notes = form.location_notes.data.strip(
         ) if form.location_notes.data else None
 

@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Locations | Green Guard
+{% endblock %}
+
+{% block content %}
+  <div class="container my-5">
+    <div class="gg-locations-hero p-4 p-lg-5 mb-4">
+      <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 align-items-start align-items-lg-center">
+        <div>
+          <span class="map-hero-badge">Saved GFW data</span>
+          <h1 class="h3 mt-3 mb-2 font-weight-bold">Saved Locations</h1>
+          <p class="mb-0 text-white-50">These are global country-level locations synced from Global Forest Watch, including reforestation-tagged points.</p>
+        </div>
+        <a href="{{ url_for('main.map_view') }}" class="btn btn-light btn-lg px-4">
+          <i class="fas fa-map mr-2"></i>
+          Back to Map
+        </a>
+      </div>
+    </div>
+
+    {% if locations %}
+      <div class="card mb-4">
+        <div class="card-body">
+          <h2 class="h5 mb-3">Country Data Summary</h2>
+          <div class="table-responsive">
+            <table class="table table-sm mb-0">
+              <thead>
+                <tr>
+                  <th>Country</th>
+                  <th>Code</th>
+                  <th>Total Locations</th>
+                  <th>Reforestation Tagged</th>
+                  <th>Last Seen</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in country_summary %}
+                  <tr>
+                    <td>{{ row.country_name }}</td>
+                    <td>{{ row.country_code }}</td>
+                    <td>{{ row.total_locations }}</td>
+                    <td>{{ row.reforestation_locations }}</td>
+                    <td>
+                      {% if row.last_seen_at %}
+                        {{ row.last_seen_at.strftime('%Y-%m-%d %H:%M') }} UTC
+                      {% else %}
+                        n/a
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        {% for location in locations %}
+          <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 gg-location-card">
+              <div class="card-body d-flex flex-column">
+                <div class="mb-3 d-flex flex-wrap gap-2">
+                  <span class="gg-location-pill">
+                    <i class="fas fa-location-dot"></i> {{ location.country_name or location.region_label }}{% if location.country_code %}
+                      ({{ location.country_code }})
+                    {% endif %}
+                  </span>
+                  <span class="gg-location-pill"><i class="fas fa-calendar-day"></i> {{ location.alert_date }}</span>
+                  {% if location.reforestation_type %}
+                    <span class="gg-location-pill"><i class="fas fa-seedling"></i> {{ location.reforestation_type }}</span>
+                  {% endif %}
+                </div>
+                <h2 class="h5 mb-2">{{ location.name }}</h2>
+                <p class="text-muted mb-3">
+                  {{ location.description[:160] }}{% if location.description|length > 160 %}...{% endif %}
+                </p>
+                <div class="mt-auto d-flex justify-content-between align-items-center small text-muted">
+                  <span>{{ location.latitude }}, {{ location.longitude }}</span>
+                  <span>Seen {{ location.last_seen_at.strftime('%Y-%m-%d') }}</span>
+                </div>
+                <a href="{{ url_for('main.location_detail', location_id=location.id) }}" class="stretched-link" aria-label="Open location details"></a>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="alert alert-light border">No saved GFW locations are available yet.</div>
+    {% endif %}
+  </div>
+{% endblock %}

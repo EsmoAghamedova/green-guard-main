@@ -5,17 +5,24 @@
 {% endblock %}
 
 {% block content %}
-  <div class="container my-5">
+  <section class="container my-5 gg-report-shell">
     <div class="mb-3">
-      <a href="{{ url_for('reports.trees_gallery') }}" class="btn btn-outline-secondary">Back to Trees Gallery</a>
+      <a href="{{ url_for('reports.trees_gallery') }}" class="btn gg-btn-soft">Back to Trees Gallery</a>
     </div>
 
-    <div class="card shadow-sm">
+    <article class="card shadow-sm gg-report-detail-card gg-report-detail-success">
       {% if tree.image_filename %}
-        <img src="{{ url_for('static', filename='uploads/' ~ tree.image_filename) }}" class="card-img-top gg-detail-image" alt="Tree planting image" />
+        {% if tree.image_filename.lower().endswith('.mp4') or tree.image_filename.lower().endswith('.mov') or tree.image_filename.lower().endswith('.webm') %}
+          <video controls class="card-img-top gg-detail-image">
+            <source src="{{ url_for('static', filename='uploads/' ~ tree.image_filename) }}" />Your browser does not support video playback.
+          </video>
+        {% else %}
+          <img src="{{ url_for('static', filename='uploads/' ~ tree.image_filename) }}" class="card-img-top gg-detail-image" alt="Tree planting image" />
+        {% endif %}
       {% endif %}
 
       <div class="card-body">
+        <p class="gg-report-kicker mb-2">Restoration Record</p>
         <h1 class="h4 mb-3">Tree Planting Record #{{ tree.id }}</h1>
         {% if current_user.is_authenticated and current_user.id == tree.user_id or current_user.is_admin %}
           <div class="d-flex flex-wrap mb-3">
@@ -26,6 +33,9 @@
             </form>
           </div>
         {% endif %}
+        <p class="mb-3">
+          <strong>Type:</strong> <span class="badge gg-report-status-success text-uppercase">Planting</span>
+        </p>
         <p class="mb-2">
           <strong>Species:</strong> {{ tree.species }}
         </p>
@@ -47,6 +57,6 @@
           </p>
         {% endif %}
       </div>
-    </div>
-  </div>
+    </article>
+  </section>
 {% endblock %}

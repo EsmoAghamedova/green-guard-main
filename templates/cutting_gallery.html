@@ -5,29 +5,31 @@
 {% endblock %}
 
 {% block content %}
-  <div class="container my-5">
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+  <section class="container my-5 gg-report-shell">
+    <div class="gg-report-page-head mb-4">
       <div>
+        <p class="gg-report-kicker mb-2">Evidence Feed</p>
         <h1 class="h3 mb-1">Illegal Cutting Reports Gallery</h1>
-        <p class="text-muted mb-0">Tap any card to open full report details.</p>
+        <p class="text-muted mb-0">Open any card to inspect report details and moderation status.</p>
       </div>
-      <a href="{{ url_for('reports.view_reports') }}" class="btn btn-outline-secondary mt-3 mt-sm-0">Back to Community Gallery</a>
+      <a href="{{ url_for('reports.view_reports') }}" class="btn gg-btn-soft mt-3 mt-sm-0">Back to Community Gallery</a>
     </div>
 
     {% if reports %}
       <div class="row">
         {% for report in reports %}
           <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card h-100 shadow-sm gg-gallery-card">
+            <article class="card h-100 shadow-sm gg-gallery-card gg-report-gallery-card gg-report-gallery-danger">
               {% if report.image_filename %}
                 <img src="{{ url_for('static', filename='uploads/' ~ report.image_filename) }}" class="card-img-top gg-gallery-thumb" alt="Cutting report image" />
               {% else %}
-                <div class="card-img-top gg-gallery-thumb d-flex align-items-center justify-content-center bg-light text-muted">No Image</div>
+                <div class="card-img-top gg-gallery-thumb d-flex align-items-center justify-content-center bg-light text-muted">No image uploaded</div>
               {% endif %}
               <div class="card-body">
-                <p class="mb-2">
-                  <strong>Status:</strong> <span class="badge badge-secondary text-uppercase">{{ report.status }}</span>
-                </p>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="gg-report-mini-label">Report #{{ report.id }}</span>
+                  <span class="badge badge-secondary text-uppercase">{{ report.status }}</span>
+                </div>
                 <p class="mb-2">
                   {{ report.description[:110] }}{% if report.description|length > 110 %}...{% endif %}
                 </p>
@@ -35,12 +37,12 @@
                 <p class="mb-0 small text-muted">{{ report.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
                 <a href="{{ url_for('reports.cutting_detail', report_id=report.id) }}" class="stretched-link" aria-label="Open report details"></a>
               </div>
-            </div>
+            </article>
           </div>
         {% endfor %}
       </div>
     {% else %}
-      <div class="alert alert-light border">No cutting reports yet.</div>
+      <div class="gg-report-empty">No cutting reports yet.</div>
     {% endif %}
-  </div>
+  </section>
 {% endblock %}

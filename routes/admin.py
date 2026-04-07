@@ -4,7 +4,7 @@ from flask import Blueprint, abort, flash, redirect, render_template, request, u
 from flask_login import current_user, login_required
 
 from extensions import db
-from models import CuttingReport, TreeRecord, User
+from models import Campaign, CuttingReport, SupportDonation, TreeRecord, User
 
 admin_bp = Blueprint("admin", __name__)
 
@@ -30,11 +30,41 @@ def dashboard():
         TreeRecord.created_at.desc()).all()
     reports = CuttingReport.query.order_by(
         CuttingReport.created_at.desc()).all()
+    campaigns = Campaign.query.order_by(Campaign.event_date.desc()).all()
+    sponsor_donations = SupportDonation.query.order_by(
+        SupportDonation.created_at.desc()).all()
+
+    sponsor_totals = (
+        db.session.query(User, db.func.sum(
+            SupportDonation.amount).label("total_amount"))
+        .join(SupportDonation, SupportDonation.user_id == User.id)
+        .filter(User.role.in_(["business", "individual"]))
+        .group_by(User.id)
+        .order_by(db.func.sum(SupportDonation.amount).desc())
+        .all()
+    )
+    donation_volume = sum(float(item.amount) for item in sponsor_donations)
+
+    campaign_rows = [
+        {
+            "id": campaign.id,
+            "title": campaign.title,
+            "creator_name": campaign.creator.username if campaign.creator else "Green Guard",
+            "event_date_text": campaign.event_date.strftime("%Y-%m-%d"),
+            "status": campaign.status,
+        }
+        for campaign in campaigns
+    ]
     return render_template(
         "admin/dashboard.html",
         users=users,
         tree_records=tree_records,
         reports=reports,
+        campaigns=campaigns,
+        campaign_rows=campaign_rows,
+        sponsor_donations=sponsor_donations,
+        sponsor_totals=sponsor_totals,
+        donation_volume=donation_volume,
     )
 
 
@@ -61,4 +91,22 @@ def update_report_status(report_id):
     report.status = new_status
     db.session.commit()
     flash("Report status updated.", "success")
+    return redirect(url_for("admin.dashboard"))
+
+
+@admin_bp.route("/admin/campaign/<int:campaign_id>/status", methods=["POST"])
+@login_required
+@admin_required
+def update_campaign_status(campaign_id):
+    campaign = Campaign.query.get_or_404(campaign_id)
+    new_status = request.form.get("status", "open").strip().lower()
+    valid_statuses = {"open", "ongoing", "closed"}
+
+    if new_status not in valid_statuses:
+        flash("Invalid campaign status value.", "danger")
+        return redirect(url_for("admin.dashboard"))
+
+    campaign.status = new_status
+    db.session.commit()
+    flash("Campaign status updated.", "success")
     return redirect(url_for("admin.dashboard"))

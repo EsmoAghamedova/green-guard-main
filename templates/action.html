@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Create / Report | Green Guard
+{% endblock %}
+
+{% block content %}
+  <section class="mx-auto mt-8 mb-10 w-full max-w-5xl px-4 sm:px-6">
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h1 class="text-2xl font-bold text-slate-900">Create / Report</h1>
+      <p class="mt-2 text-sm text-slate-600">One action page for campaign creation and planting proof.</p>
+      <div class="mt-4 flex flex-wrap gap-2">
+        {% if active_mode == 'campaign' %}
+          <a href="{{ url_for('main.create_or_report', mode='campaign') }}" class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Create Campaign</a>
+        {% else %}
+          <a href="{{ url_for('main.create_or_report', mode='campaign') }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">Create Campaign</a>
+        {% endif %}
+
+        {% if active_mode == 'plant' %}
+          <a href="{{ url_for('main.create_or_report', mode='plant') }}" class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Report Planting</a>
+        {% else %}
+          <a href="{{ url_for('main.create_or_report', mode='plant') }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">Report Planting</a>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if active_mode == 'campaign' %}
+      <div class="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="text-lg font-semibold text-slate-900">Create Campaign</h2>
+        <form method="POST" class="mt-4 space-y-3">
+          {{ campaign_form.hidden_tag() }}
+          <div>{{ campaign_form.title.label(class='mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500') }}
+            {{ campaign_form.title(class='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm') }}</div>
+          <div>{{ campaign_form.description.label(class='mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500') }}
+            {{ campaign_form.description(class='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm', rows='4') }}</div>
+          <div class="grid gap-3 sm:grid-cols-2">
+            <div>{{ campaign_form.location.label(class='mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500') }}
+              {{ campaign_form.location(class='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm') }}</div>
+            <div>{{ campaign_form.event_date.label(class='mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500') }}
+              {{ campaign_form.event_date(class='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm', placeholder='YYYY-MM-DD') }}</div>
+          </div>
+          <div>{{ campaign_form.target_trees.label(class='mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500') }}
+            {{ campaign_form.target_trees(class='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm', min='1') }}</div>
+          {{ campaign_form.submit(class='rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700') }}
+        </form>
+      </div>
+    {% endif %}
+
+    {% if active_mode == 'plant' %}
+      <div class="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="text-lg font-semibold text-slate-900">Report Planting</h2>
+        <form method="POST" enctype="multipart/form-data" class="mt-4 space-y-3">
+          {{ plant_form.hidden_tag() }}
+          <div class="grid gap-3 sm:grid-cols-2">
+            <div>{{ plant_form.species.label(class='mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500') }}
+              {{ plant_form.species(class='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm') }}</div>
+            <div>{{ plant_form.quantity.label(class='mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500') }}
+              {{ plant_form.quantity(class='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm', min='1') }}</div>
+          </div>
+          <div>
+            {{ plant_form.location_search.label(class='mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500') }}
+            <p class="mb-2 text-xs text-slate-500">Use GPS to set your planting location.</p>
+            <div class="gg-location-search-container" data-location-search-wrapper>
+              <div class="gg-location-search-wrapper">
+                {{ plant_form.location_search(class='form-control gg-location-search-input', placeholder='Search by street, city, or landmark...', autocomplete='off', data_location_search='true') }}
+                <button type="button" class="gg-gps-button" data-gps-button title="Get your current location using GPS">
+                  <i class="fas fa-location-crosshairs"></i>
+                  <span>GPS</span>
+                </button>
+              </div>
+              <div class="gg-location-results" data-location-results></div>
+              <div class="gg-selected-location" data-selected-location></div>
+            </div>
+            {% for error in plant_form.location_source.errors %}
+              <p class="mt-1 text-xs text-rose-600">{{ error }}</p>
+            {% endfor %}
+          </div>
+
+          <div class="hidden">{{ plant_form.latitude(class='gg-coordinate-field', data_latitude_field='true', type='hidden') }}
+            {{ plant_form.longitude(class='gg-coordinate-field', data_longitude_field='true', type='hidden') }}</div>
+          {% for error in plant_form.latitude.errors %}
+            <p class="mt-1 text-xs text-rose-600">{{ error }}</p>
+          {% endfor %}
+          {% for error in plant_form.longitude.errors %}
+            <p class="mt-1 text-xs text-rose-600">{{ error }}</p>
+          {% endfor %}
+
+          <div>{{ plant_form.image.label(class='mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500') }}
+            {{ plant_form.image(class='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm') }}</div>
+          <div>{{ plant_form.location_notes.label(class='mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500') }}
+            {{ plant_form.location_notes(class='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm') }}</div>
+          <div class="flex items-start gap-2">
+            {{ plant_form.privacy_confirm(class='mt-1') }}
+            <label for="{{ plant_form.privacy_confirm.id }}" class="text-sm text-slate-700">{{ plant_form.privacy_confirm.label.text }}</label>
+          </div>
+          {{ plant_form.submit(class='rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700') }}
+        </form>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{{ url_for('static', filename='js/location-search.js') }}"></script>
+{% endblock %}

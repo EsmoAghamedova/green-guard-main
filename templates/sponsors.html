@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Sponsors | Green Guard
+{% endblock %}
+
+{% block content %}
+  <section class="mx-auto mt-8 w-full max-w-6xl px-4 sm:px-6">
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h1 class="text-2xl font-bold text-slate-900">Sponsors</h1>
+      <p class="mt-2 text-sm text-slate-600">Businesses help fund tree planting and gain transparent public impact visibility.</p>
+    </div>
+
+    <div class="mt-6 grid gap-4 lg:grid-cols-2">
+      <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="text-lg font-semibold text-slate-900">Why sponsor?</h2>
+        <ul class="mt-3 space-y-2 text-sm text-slate-700">
+          <li>Build an eco-friendly public brand.</li>
+          <li>Fund measurable restoration outcomes.</li>
+          <li>Get transparent contribution visibility.</li>
+        </ul>
+      </article>
+
+      <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="text-lg font-semibold text-slate-900">Packages</h2>
+        <div class="mt-3 grid gap-2 sm:grid-cols-3">
+          <div class="rounded-xl border border-slate-200 p-3 text-center">
+            <p class="text-xs uppercase text-slate-500">Basic</p>
+            <p class="mt-1 text-sm font-semibold">50 Trees</p>
+            <p class="text-sm">$200</p>
+          </div>
+          <div class="rounded-xl border border-slate-200 p-3 text-center">
+            <p class="text-xs uppercase text-slate-500">Pro</p>
+            <p class="mt-1 text-sm font-semibold">100 Trees</p>
+            <p class="text-sm">$380</p>
+          </div>
+          <div class="rounded-xl border border-slate-200 p-3 text-center">
+            <p class="text-xs uppercase text-slate-500">Premium</p>
+            <p class="mt-1 text-sm font-semibold">500 Trees</p>
+            <p class="text-sm">$1750</p>
+          </div>
+        </div>
+        <a href="{{ url_for('main.sponsorship_donations') }}" class="mt-4 inline-block rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">Sponsor Trees</a>
+      </article>
+    </div>
+
+    <article class="mt-6 mb-10 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 class="text-lg font-semibold text-slate-900">Sponsor Showcase</h2>
+      {% if sponsor_showcase %}
+        <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {% for sponsor in sponsor_showcase %}
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div class="flex items-center gap-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-600 text-sm font-bold text-white">{{ sponsor.user.username[:2]|upper }}</div>
+                <p class="text-sm font-semibold text-slate-900">{{ sponsor.user.username }}</p>
+              </div>
+              <p class="mt-3 text-sm text-slate-700">
+                Donated: <strong>${{ '%.2f'|format(sponsor.amount_total) }}</strong>
+              </p>
+              <p class="text-sm text-slate-700">
+                Trees funded: <strong>{{ sponsor.trees_total }}</strong>
+              </p>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="mt-3 text-sm text-slate-600">No sponsors published yet.</p>
+      {% endif %}
+    </article>
+  </section>
+{% endblock %}

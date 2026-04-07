@@ -9,19 +9,53 @@
 {% endblock %}
 
 {% block content %}
-  <div class="container my-4">
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <h2 class="h4 mb-3">Community Environmental Map</h2>
-        <p class="text-muted">Green markers show planted trees. Red markers show reported cutting incidents.</p>
-        <div class="d-flex flex-wrap align-items-center mb-3">
-          <button id="gps-locate-btn" type="button" class="btn btn-outline-primary btn-sm mr-2 mb-2">
-            <i class="fas fa-location-crosshairs mr-1"></i>
-            Use My GPS Location
-          </button>
-          <small id="gps-status" class="text-muted mb-2">Click to center the map on your current location.</small>
+  <div class="container map-page-shell my-4">
+    <div class="map-hero mb-4 rounded-4 p-4 p-lg-5 text-white shadow-soft">
+      <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 align-items-start align-items-lg-center">
+        <div>
+          <span class="map-hero-badge">Forest Protection Map</span>
+          <h2 class="h3 mt-3 mb-2 font-weight-bold">Forest Activity Map</h2>
+          <p class="mb-0 map-hero-copy">See deforestation alerts, sponsored trees, and citizen reports in one shared impact map.</p>
         </div>
-        <div id="map" class="gg-map"></div>
+        <button id="gps-locate-btn" type="button" class="btn btn-light btn-lg px-4 map-gps-btn">
+          <i class="fas fa-location-crosshairs mr-2"></i>
+          Use My GPS Location
+        </button>
+      </div>
+    </div>
+
+    <div class="row mb-4 g-3">
+      <div class="col-12">
+        <div class="card map-panel map-panel-canvas h-100">
+          <div class="card-body">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+              <div>
+                <h3 class="h5 mb-1">Map Layers</h3>
+                <p class="text-muted mb-0">Deforestation zones, funded planting records, and community reporting in one view.</p>
+              </div>
+              <small id="gfw-status" class="map-status text-muted">Loading global deforestation zones...</small>
+            </div>
+            <div id="map" class="gg-map"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="card map-panel h-100">
+          <div class="card-body">
+            <h3 class="h5 mb-3">Legend</h3>
+            <div class="map-legend-item">
+              <span class="map-legend-dot map-legend-dot-tree"></span>Sponsored and planted trees
+            </div>
+            <div class="map-legend-item">
+              <span class="map-legend-dot map-legend-dot-cutting"></span>Citizen illegal logging reports
+            </div>
+            <div class="map-legend-item">
+              <span class="map-legend-dot map-legend-dot-restoration"></span>Deforestation zones (API)
+            </div>
+            <hr />
+            <p class="text-muted mb-0">Source mix: Global Forest Watch API plus verified GreenGuard community records.</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -43,5 +77,5 @@
     }
   </script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script src="{{ url_for('static', filename='js/map.js', v='2') }}"></script>
+  <script src="{{ url_for('static', filename='js/map.js', v='6') }}"></script>
 {% endblock %}

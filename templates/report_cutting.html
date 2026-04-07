@@ -5,63 +5,85 @@
 {% endblock %}
 
 {% block content %}
-  <div class="container my-5">
+  <section class="container my-5 gg-report-shell">
     <div class="row justify-content-center">
-      <div class="col-lg-8">
-        <div class="card shadow-sm">
-          <div class="card-header bg-danger text-white">
-            <h2 class="h5 mb-0">Report Illegal Tree Cutting</h2>
-          </div>
-          <div class="card-body">
-            <div class="alert alert-warning" role="alert">
-              <strong>Photo Safety Rules:</strong> For community safety and privacy, do not upload photos that show identifiable faces, children, license plates, or private home details.
+      <div class="col-lg-9">
+        <div class="card shadow-sm gg-report-form-card gg-report-form-danger">
+          <div class="card-body p-4 p-md-5">
+            <p class="gg-report-kicker mb-2">Citizen Submission</p>
+            <h1 class="h4 mb-2">Report Illegal Tree Cutting</h1>
+            <p class="text-muted mb-4">Add clear details so moderators can verify and respond quickly. Reports can be handled anonymously and are only shown on the map after verification.</p>
+
+            <div class="gg-report-warning mb-4" role="alert">
+              <i class="fas fa-shield-alt"></i>
+              <span>Do not upload photos that show identifiable faces, children, license plates, or private home details.</span>
             </div>
-            <form method="POST" enctype="multipart/form-data">
+
+            <form method="POST" enctype="multipart/form-data" class="gg-report-form-grid">
               {{ form.hidden_tag() }}
 
-              <div class="form-group">
-                {{ form.description.label }}
-                {{ form.description(class='form-control', rows='4') }}
+              <div class="form-group gg-field-full">
+                <label class="gg-field-label">{{ form.description.label.text }}</label>
+                {{ form.description(class='form-control gg-report-input', rows='4') }}
                 {% for error in form.description.errors %}
                   <small class="text-danger d-block">{{ error }}</small>
                 {% endfor %}
               </div>
 
-              <div class="form-row">
-                <div class="form-group col-md-6">
-                  {{ form.latitude.label }}
-                  {{ form.latitude(class='form-control') }}
+              <div class="form-group gg-field-full">
+                <label class="gg-field-label">{{ form.location_search.label }}</label>
+                <div class="gg-location-search-container" data-location-search-wrapper>
+                  <div class="gg-location-search-wrapper">
+                    {{ form.location_search(class='form-control gg-location-search-input', placeholder='Search by street, city, or landmark...', autocomplete='off', data_location_search='true') }}
+                    <button type="button" class="gg-gps-button" data-gps-button title="Get your current location using GPS">
+                      <i class="fas fa-location-crosshairs"></i>
+                      <span>GPS</span>
+                    </button>
+                  </div>
+                  <div class="gg-location-results" data-location-results></div>
+                  <div class="gg-selected-location" data-selected-location></div>
+                </div>
+                {% for error in form.location_search.errors %}
+                  <small class="text-danger d-block">{{ error }}</small>
+                {% endfor %}
+              </div>
+
+              <div class="gg-coordinate-fields">
+                <div class="form-group">
+                  <label class="gg-coordinate-label">{{ form.latitude.label.text }}</label>
+                  {{ form.latitude(class='form-control gg-report-input gg-coordinate-field', placeholder='Auto-filled', data_latitude_field='true') }}
                   {% for error in form.latitude.errors %}
                     <small class="text-danger d-block">{{ error }}</small>
                   {% endfor %}
                 </div>
-                <div class="form-group col-md-6">
-                  {{ form.longitude.label }}
-                  {{ form.longitude(class='form-control') }}
+
+                <div class="form-group">
+                  <label class="gg-coordinate-label">{{ form.longitude.label.text }}</label>
+                  {{ form.longitude(class='form-control gg-report-input gg-coordinate-field', placeholder='Auto-filled', data_longitude_field='true') }}
                   {% for error in form.longitude.errors %}
                     <small class="text-danger d-block">{{ error }}</small>
                   {% endfor %}
                 </div>
               </div>
 
-              <div class="form-group">
-                {{ form.location_text.label }}
-                {{ form.location_text(class='form-control') }}
+              <div class="form-group gg-field-full">
+                <label class="gg-field-label">{{ form.location_text.label.text }}</label>
+                {{ form.location_text(class='form-control gg-report-input') }}
                 {% for error in form.location_text.errors %}
                   <small class="text-danger d-block">{{ error }}</small>
                 {% endfor %}
               </div>
 
-              <div class="form-group">
-                {{ form.image.label }}
-                {{ form.image(class='form-control-file') }}
-                <small class="form-text text-muted">Share only evidence of tree cutting. Blur or crop identifying details before uploading.</small>
+              <div class="form-group gg-field-full">
+                <label class="gg-field-label">{{ form.image.label.text }}</label>
+                {{ form.image(class='form-control-file gg-report-file') }}
+                <small class="form-text text-muted">Share only cutting evidence. Blur or crop identifying details before uploading.</small>
                 {% for error in form.image.errors %}
                   <small class="text-danger d-block">{{ error }}</small>
                 {% endfor %}
               </div>
 
-              <div class="form-group form-check">
+              <div class="form-group form-check gg-field-full gg-report-check">
                 {{ form.privacy_confirm(class='form-check-input') }}
                 {{ form.privacy_confirm.label(class='form-check-label') }}
                 {% for error in form.privacy_confirm.errors %}
@@ -69,11 +91,15 @@
                 {% endfor %}
               </div>
 
-              {{ form.submit(class='btn btn-danger') }}
+              <div class="gg-field-full">{{ form.submit(class='btn gg-btn-danger') }}</div>
             </form>
           </div>
         </div>
       </div>
     </div>
-  </div>
+  </section>
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{{ url_for('static', filename='js/location-search.js') }}"></script>
 {% endblock %}

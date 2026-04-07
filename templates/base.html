@@ -14,7 +14,7 @@
         theme: {
           extend: {
             fontFamily: {
-              sans: ['Outfit', 'ui-sans-serif', 'system-ui'],
+              sans: ['Outfit', 'ui-sans-serif', 'system-ui']
             },
             colors: {
               gg: {
@@ -22,56 +22,133 @@
                 forest: '#1b4332',
                 moss: '#2d6a4f',
                 leaf: '#74c69d',
-                mist: '#eef7f2',
-              },
+                mist: '#eef7f2'
+              }
             },
             boxShadow: {
-              soft: '0 10px 30px rgba(0, 0, 0, 0.08)',
-            },
-          },
-        },
-      };
+              soft: '0 10px 30px rgba(0, 0, 0, 0.08)'
+            }
+          }
+        }
+      }
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/green-guard-logo.png') }}" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
     {% block extra_css %}
 
     {% endblock %}
   </head>
-  <body class="min-h-screen flex flex-col font-sans text-slate-800 antialiased">
-    <nav class="sticky top-0 z-40 border-b border-white/20 bg-gradient-to-r from-gg-forest via-gg-moss to-emerald-500 shadow-lg backdrop-blur">
-      <div class="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
-        <a class="inline-flex items-center gap-2 text-white" href="{{ url_for('main.index') }}">
-          <i class="fas fa-seedling text-lg"></i>
-          <strong class="text-lg tracking-wide">Green Guard</strong>
-        </a>
-        <button id="menuToggle" class="inline-flex items-center justify-center rounded-lg border border-white/30 px-3 py-2 text-white md:hidden" type="button">
-          <i class="fas fa-bars"></i>
-        </button>
-        <div id="menuPanel" class="hidden w-full pt-3 md:block md:w-auto md:pt-0">
-          <ul class="flex flex-col gap-2 md:flex-row md:items-center md:gap-1">
-            <li>
-              <a class="gg-nav-link" href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a>
-            </li>
-            <li>
-              <a class="gg-nav-link" href="{{ url_for('main.map_view') }}"><i class="fas fa-map"></i> Map</a>
-            </li>
-            <li>
-              <a class="gg-nav-link" href="{{ url_for('main.leaderboard') }}"><i class="fas fa-trophy"></i> Leaderboard</a>
-            </li>
-            <li>
-              <a class="gg-nav-link" href="{{ url_for('main.contact') }}"><i class="fas fa-envelope"></i> Contact</a>
-            </li>
-            <li>
-              <a class="gg-nav-link" href="{{ url_for('reports.view_reports') }}"><i class="fas fa-file-alt"></i> Reports</a>
-            </li>
+  <body class="min-h-screen font-sans text-slate-800 antialiased">
+    <div class="min-h-screen md:flex">
+      <aside class="gg-sidebar z-40 border-b border-white/20 bg-gradient-to-b from-gg-forest via-gg-moss to-emerald-500 shadow-lg md:sticky md:top-0 md:h-screen md:w-72 md:shrink-0 md:border-b-0 md:border-r">
+        <div class="flex items-center justify-between px-4 py-4 sm:px-6 md:justify-start">
+          <a class="inline-flex items-center gap-2 text-white" href="{{ url_for('main.index') }}">
+            <img src="{{ url_for('static', filename='images/green-guard-logo.png') }}" alt="Green Guard logo" class="h-10 w-10 rounded-full object-cover object-top" />
+            <strong class="text-lg tracking-wide">Green Guard</strong>
+          </a>
+          <button id="menuToggle" class="inline-flex items-center justify-center rounded-lg border border-white/30 px-3 py-2 text-white md:hidden" type="button"><i class="fas fa-bars"></i></button>
+        </div>
+        <div id="menuPanel" class="hidden px-3 pb-4 md:block md:px-4 md:pb-6">
+          <ul class="flex flex-col gap-2">
+            {% if not current_user.is_authenticated %}
+              <li>
+                <a class="gg-nav-link" href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a>
+              </li>
+              <li>
+                <a class="gg-nav-link" href="{{ url_for('main.explore') }}"><i class="fas fa-globe"></i> Explore</a>
+              </li>
+              <li>
+                <a class="gg-nav-link" href="{{ url_for('main.sponsors_page') }}"><i class="fas fa-briefcase"></i> Sponsors</a>
+              </li>
+              <li>
+                <a class="gg-nav-link" href="{{ url_for('main.leaderboard') }}"><i class="fas fa-trophy"></i> Leaderboard</a>
+              </li>
+              <li>
+                <a class="gg-nav-link" href="{{ url_for('main.contact') }}"><i class="fas fa-envelope"></i> Contact</a>
+              </li>
+            {% elif current_user.role == 'volunteer' %}
+              <li>
+                <a class="gg-nav-link" href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a>
+              </li>
+              <li>
+                <a class="gg-nav-link" href="{{ url_for('main.explore') }}"><i class="fas fa-globe"></i> Explore</a>
+              </li>
+              <li>
+                <a class="gg-nav-link" href="{{ url_for('main.create_or_report') }}"><i class="fas fa-seedling"></i> Create / Report</a>
+              </li>
+              <li>
+                <a class="gg-nav-link" href="{{ url_for('reports.view_reports') }}"><i class="fas fa-file-alt"></i> Community Reports</a>
+              </li>
+              <li>
+                <a class="gg-nav-link" href="{{ url_for('main.contact') }}"><i class="fas fa-envelope"></i> Contact</a>
+              </li>
+            {% elif current_user.role == 'business' %}
+              <li>
+                <a class="gg-nav-link" href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a>
+              </li>
+              <li>
+                <a class="gg-nav-link" href="{{ url_for('main.business_dashboard') }}"><i class="fas fa-chart-line"></i> Dashboard</a>
+              </li>
+              <li>
+                <a class="gg-nav-link" href="{{ url_for('main.explore') }}"><i class="fas fa-globe"></i> Explore</a>
+              </li>
+              <li>
+                <a class="gg-nav-link" href="{{ url_for('main.sponsorship_donations') }}"><i class="fas fa-hand-holding-dollar"></i> Sponsor (Donate)</a>
+              </li>
+              <li>
+                <a class="gg-nav-link" href="{{ url_for('main.leaderboard') }}"><i class="fas fa-trophy"></i> Leaderboard</a>
+              </li>
+            {% else %}
+              <li>
+                <a class="gg-nav-link" href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a>
+              </li>
+              <li>
+                <a class="gg-nav-link" href="{{ url_for('main.explore') }}"><i class="fas fa-globe"></i> Explore</a>
+              </li>
+              <li>
+                <a class="gg-nav-link" href="{{ url_for('main.create_or_report') }}"><i class="fas fa-seedling"></i> Create / Report</a>
+              </li>
+              <li>
+                <a class="gg-nav-link" href="{{ url_for('main.sponsors_page') }}"><i class="fas fa-briefcase"></i> Sponsors</a>
+              </li>
+              <li>
+                <a class="gg-nav-link" href="{{ url_for('main.leaderboard') }}"><i class="fas fa-trophy"></i> Leaderboard</a>
+              </li>
+              <li>
+                <a class="gg-nav-link" href="{{ url_for('main.contact') }}"><i class="fas fa-envelope"></i> Contact</a>
+              </li>
+              <li>
+                <a class="gg-nav-link" href="{{ url_for('reports.view_reports') }}"><i class="fas fa-file-alt"></i> Reports</a>
+              </li>
+              {% if current_user.role == 'citizen' %}
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('reports.report_cutting') }}"><i class="fas fa-triangle-exclamation"></i> Report Illegal Logging</a>
+                </li>
+              {% endif %}
+              {% if current_user.role in ['individual', 'business', 'citizen'] %}
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('main.create_or_report', mode='plant') }}"><i class="fas fa-seedling"></i> Plant Tree / Report</a>
+                </li>
+              {% endif %}
+              {% if current_user.role in ['individual', 'business'] %}
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('main.sponsorship_donations') }}"><i class="fas fa-hand-holding-dollar"></i> Donate Funds</a>
+                </li>
+              {% endif %}
+            {% endif %}
 
             {% if current_user.is_authenticated %}
+              {% if current_user.role != 'business' %}
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('reports.plant_tree_campaign') }}"><i class="fas fa-seedling"></i> Fund Campaigns</a>
+                </li>
+              {% endif %}
               <li>
-                <a class="gg-nav-link" href="{{ url_for('main.profile') }}"><i class="fas fa-user"></i> {{ current_user.username }}</a>
+                <a class="gg-nav-link" href="{{ url_for('main.profile') }}"><i class="fas fa-user"></i> Profile</a>
               </li>
               <li>
                 <a class="gg-nav-link" href="{{ url_for('auth.settings') }}"><i class="fas fa-sliders-h"></i> Settings</a>
@@ -94,55 +171,55 @@
             {% endif %}
           </ul>
         </div>
-      </div>
-    </nav>
+      </aside>
 
-    <div class="mx-auto mt-6 w-full max-w-6xl px-4 sm:px-6">
-      {% with messages=get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          {% for category, message in messages %}
-            {% if category == 'success' %}
-              {% set flash_style = 'border-emerald-300 bg-emerald-50 text-emerald-800' %}
-            {% elif category == 'danger' %}
-              {% set flash_style = 'border-rose-300 bg-rose-50 text-rose-800' %}
-            {% elif category == 'warning' %}
-              {% set flash_style = 'border-amber-300 bg-amber-50 text-amber-800' %}
-            {% else %}
-              {% set flash_style = 'border-sky-300 bg-sky-50 text-sky-800' %}
+      <div class="flex min-h-screen flex-1 flex-col">
+        <div class="mx-auto mt-6 w-full max-w-6xl px-4 sm:px-6">
+          {% with messages=get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+              {% for category, message in messages %}
+                {% if category == 'success' %}
+                  {% set flash_style = 'border-emerald-300 bg-emerald-50 text-emerald-800' %}
+                {% elif category == 'danger' %}
+                  {% set flash_style = 'border-rose-300 bg-rose-50 text-rose-800' %}
+                {% elif category == 'warning' %}
+                  {% set flash_style = 'border-amber-300 bg-amber-50 text-amber-800' %}
+                {% else %}
+                  {% set flash_style = 'border-sky-300 bg-sky-50 text-sky-800' %}
+                {% endif %}
+                <div class="mb-3 rounded-2xl border px-4 py-3 shadow-sm {{ flash_style }}" role="alert">{{ message }}</div>
+              {% endfor %}
             {% endif %}
-            <div class="mb-3 rounded-2xl border px-4 py-3 shadow-sm {{ flash_style }}" role="alert">
-              {{ message }}
+          {% endwith %}
+        </div>
+
+        <main class="gg-main flex-1">
+          {% block content %}
+
+          {% endblock %}
+        </main>
+
+        <footer class="gg-footer mt-auto border-t border-white/15 py-8 text-white">
+          <div class="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
+            <div>
+              <p class="mb-1 text-sm sm:text-base">
+                <strong>Green Guard</strong> community platform for tree protection and reporting.
+              </p>
+              <small class="text-emerald-100">&copy; 2026 Green Guard</small>
             </div>
-          {% endfor %}
-        {% endif %}
-      {% endwith %}
+            <i class="fas fa-leaf text-xl text-emerald-100"></i>
+          </div>
+        </footer>
+      </div>
     </div>
 
-    <main class="gg-main flex-1">
-      {% block content %}
-
-      {% endblock %}
-    </main>
-
-    <footer class="gg-footer mt-auto border-t border-white/15 py-8 text-white">
-      <div class="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
-        <div>
-          <p class="mb-1 text-sm sm:text-base">
-              <strong>Green Guard</strong> community platform for tree protection and reporting.
-          </p>
-          <small class="text-emerald-100">&copy; 2026 Green Guard</small>
-        </div>
-        <i class="fas fa-leaf text-xl text-emerald-100"></i>
-      </div>
-    </footer>
-
     <script>
-      const menuToggle = document.getElementById('menuToggle');
-      const menuPanel = document.getElementById('menuPanel');
+      const menuToggle = document.getElementById('menuToggle')
+      const menuPanel = document.getElementById('menuPanel')
       if (menuToggle && menuPanel) {
         menuToggle.addEventListener('click', () => {
-          menuPanel.classList.toggle('hidden');
-        });
+          menuPanel.classList.toggle('hidden')
+        })
       }
     </script>
     {% block extra_js %}

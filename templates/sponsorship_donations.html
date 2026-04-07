@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Sponsor Donations | Green Guard
+{% endblock %}
+
+{% block content %}
+  <section class="mx-auto mt-8 w-full max-w-6xl px-4 sm:px-6">
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900">Sponsor (Donate)</h1>
+          <p class="mt-2 max-w-3xl text-sm text-slate-600">Choose donation amount or number of trees, optionally attach to a campaign, and track your sponsor benefits.</p>
+        </div>
+        {% if current_user.role == 'business' %}
+          <a href="{{ url_for('main.business_dashboard') }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">Back to Dashboard</a>
+        {% else %}
+          <a href="{{ url_for('main.profile') }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">Back to Profile</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <p class="text-xs uppercase tracking-wide text-slate-500">Your Sponsorship Total</p>
+        <p class="mt-2 text-2xl font-bold text-slate-900">${{ '%.2f'|format(user_total_amount) }}</p>
+      </article>
+      <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <p class="text-xs uppercase tracking-wide text-slate-500">Your Trees Sponsored</p>
+        <p class="mt-2 text-2xl font-bold text-slate-900">{{ user_total_trees }}</p>
+      </article>
+      <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <p class="text-xs uppercase tracking-wide text-slate-500">Your Estimated CO2 Impact</p>
+        <p class="mt-2 text-2xl font-bold text-slate-900">{{ user_co2_kg }} kg</p>
+      </article>
+      <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <p class="text-xs uppercase tracking-wide text-slate-500">Platform Sponsor Volume</p>
+        <p class="mt-2 text-2xl font-bold text-slate-900">${{ '%.2f'|format(total_amount) }}</p>
+      </article>
+    </div>
+
+    <div class="mt-6 grid gap-4 lg:grid-cols-1">
+      <article class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm">
+        <h2 class="text-base font-semibold text-emerald-900">Bulk tree packages</h2>
+        <p class="mt-2 text-sm text-emerald-900">Fast purchase options for sponsor teams.</p>
+        <div class="mt-3 space-y-2">
+          {% for key, package in package_options.items() %}
+            <a href="{{ url_for('main.sponsorship_donations') }}?package={{ key }}" class="flex items-center justify-between rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-100">
+              <span>{{ package.trees }} trees</span>
+              <span>${{ package.amount }}</span>
+            </a>
+          {% endfor %}
+        </div>
+      </article>
+    </div>
+
+    <div class="mt-6 grid gap-4 lg:grid-cols-2">
+      <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="text-lg font-semibold text-slate-900">Create sponsorship</h2>
+        <form method="POST" class="mt-4 space-y-3">
+          {{ form.hidden_tag() }}
+
+          <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+            You get: <strong>{{ 'Green Supporter' if user_total_trees < 100 else ('Eco Partner' if user_total_trees < 500 else 'Eco Champion') }}</strong> badge, public visibility, and leaderboard points.
+          </div>
+
+          <div>
+            {{ form.category.label(class='mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500') }}
+            {{ form.category(class='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm') }}
+            {% for error in form.category.errors %}
+              <p class="mt-1 text-xs text-rose-600">{{ error }}</p>
+            {% endfor %}
+          </div>
+
+          <div>
+            {{ form.donation_item.label(class='mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500') }}
+            {{ form.donation_item(class='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm') }}
+            {% for error in form.donation_item.errors %}
+              <p class="mt-1 text-xs text-rose-600">{{ error }}</p>
+            {% endfor %}
+          </div>
+
+          <div class="grid gap-3 sm:grid-cols-2">
+            <div>
+              {{ form.quantity.label(class='mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500') }}
+              {{ form.quantity(class='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm', min='1', placeholder='Optional if amount is entered') }}
+              {% for error in form.quantity.errors %}
+                <p class="mt-1 text-xs text-rose-600">{{ error }}</p>
+              {% endfor %}
+            </div>
+            <div>
+              {{ form.amount.label(class='mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500') }}
+              {{ form.amount(class='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm', step='0.01', min='1', placeholder='Optional if trees are entered') }}
+              {% for error in form.amount.errors %}
+                <p class="mt-1 text-xs text-rose-600">{{ error }}</p>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div>
+            {{ form.campaign_id.label(class='mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500') }}
+            {{ form.campaign_id(class='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm') }}
+            {% for error in form.campaign_id.errors %}
+              <p class="mt-1 text-xs text-rose-600">{{ error }}</p>
+            {% endfor %}
+          </div>
+
+          <div>
+            {{ form.note.label(class='mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500') }}
+            {{ form.note(class='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm', rows='4', placeholder='Optional donation note') }}
+            {% for error in form.note.errors %}
+              <p class="mt-1 text-xs text-rose-600">{{ error }}</p>
+            {% endfor %}
+          </div>
+
+          <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">Commission policy: each sponsorship includes a platform fee between 5% and 15%. Enter amount, trees, or both.</div>
+
+          {{ form.submit(class='w-full rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700') }}
+        </form>
+      </article>
+
+      <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="text-lg font-semibold text-slate-900">Monetization and transparency</h2>
+        <div class="mt-3 grid gap-3 sm:grid-cols-2">
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <p class="text-xs uppercase tracking-wide text-slate-500">Business donations</p>
+            <p class="mt-1 text-lg font-semibold text-slate-900">${{ '%.2f'|format(total_project_amount + total_commission_amount) }}</p>
+          </div>
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <p class="text-xs uppercase tracking-wide text-slate-500">Total commission (5-15%)</p>
+            <p class="mt-1 text-lg font-semibold text-slate-900">${{ '%.2f'|format(total_commission_amount) }}</p>
+          </div>
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <p class="text-xs uppercase tracking-wide text-slate-500">Project allocation</p>
+            <p class="mt-1 text-lg font-semibold text-slate-900">${{ '%.2f'|format(total_project_amount) }}</p>
+          </div>
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <p class="text-xs uppercase tracking-wide text-slate-500">Trees funded by sponsors</p>
+            <p class="mt-1 text-lg font-semibold text-slate-900">{{ total_plants_quantity }}</p>
+          </div>
+        </div>
+
+        <div class="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">Public visibility is enabled: sponsor company names are shown in contribution rankings for trust and transparency.</div>
+
+        <a href="{{ url_for('main.business_certificate') }}" class="mt-4 inline-block rounded-xl border border-emerald-300 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100">Get Digital Certificate</a>
+      </article>
+    </div>
+
+    <article class="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 class="text-lg font-semibold text-slate-900">Featured business sponsors</h2>
+      {% if top_businesses %}
+        <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {% for business, business_total in top_businesses %}
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <div class="flex items-center gap-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-600 text-sm font-bold text-white">{{ business.username[:2]|upper }}</div>
+                <div>
+                  <p class="text-sm font-semibold text-slate-900">{{ business.username }}</p>
+                  <p class="text-xs text-slate-600">Brand displayed as sponsor partner</p>
+                </div>
+              </div>
+              <p class="mt-2 text-sm text-slate-700">
+                Contribution: <strong>${{ '%.2f'|format(business_total|float) }}</strong>
+              </p>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="mt-3 text-sm text-slate-600">No featured sponsors yet. Your business can be first.</p>
+      {% endif %}
+    </article>
+
+    <article class="mt-6 mb-10 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 class="text-lg font-semibold text-slate-900">Your sponsorship history</h2>
+      {% if user_donations %}
+        <div class="mt-3 overflow-x-auto">
+          <table class="min-w-full divide-y divide-slate-200 text-sm">
+            <thead class="bg-slate-50">
+              <tr>
+                <th class="px-3 py-2 text-left font-semibold text-slate-700">Category</th>
+                <th class="px-3 py-2 text-left font-semibold text-slate-700">Item</th>
+                <th class="px-3 py-2 text-left font-semibold text-slate-700">Quantity</th>
+                <th class="px-3 py-2 text-left font-semibold text-slate-700">Amount</th>
+                <th class="px-3 py-2 text-left font-semibold text-slate-700">Points</th>
+                <th class="px-3 py-2 text-left font-semibold text-slate-700">Date</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              {% for donation in user_donations %}
+                <tr>
+                  <td class="px-3 py-2">{{ category_labels.get(donation.category, donation.category) }}</td>
+                  <td class="px-3 py-2">{{ donation_item_labels.get(donation.donation_item, donation.donation_item) }}</td>
+                  <td class="px-3 py-2">{{ donation.quantity }}</td>
+                  <td class="px-3 py-2">${{ '%.2f'|format(donation.amount|float) }}</td>
+                  <td class="px-3 py-2">{{ donation.points }}</td>
+                  <td class="px-3 py-2">{{ donation.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                </tr>
+                {% if donation.note %}
+                  <tr>
+                    <td colspan="6" class="bg-slate-50 px-3 py-2 text-xs text-slate-600">{{ donation.note }}</td>
+                  </tr>
+                {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="mt-3 text-sm text-slate-600">No sponsorship records yet. Choose a package above to start.</p>
+      {% endif %}
+    </article>
+  </section>
+{% endblock %}

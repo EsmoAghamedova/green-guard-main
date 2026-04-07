@@ -20,6 +20,7 @@ def register():
             username=form.username.data.strip(),
             email=form.email.data.strip().lower(),
             password_hash=generate_password_hash(form.password.data),
+            role=form.role.data,
             is_admin=False,
         )
         db.session.add(user)
@@ -72,6 +73,7 @@ def settings():
 
         current_user.username = form.username.data.strip()
         current_user.email = form.email.data.strip().lower()
+        current_user.role = form.role.data
 
         if form.new_password.data:
             current_user.password_hash = generate_password_hash(

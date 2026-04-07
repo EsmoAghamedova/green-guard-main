@@ -5,42 +5,44 @@
 {% endblock %}
 
 {% block content %}
-  <div class="container my-5">
-    <div class="row justify-content-center">
-      <div class="col-lg-10">
-        <h1 class="h3 mb-2">Community Gallery</h1>
-        <p class="text-muted mb-4">Browse reports and planted trees in separate galleries, then open any card for full details.</p>
+  <section class="container my-5 gg-report-shell">
+    <div class="gg-report-hero mb-4">
+      <p class="gg-report-kicker mb-2">Community Evidence Hub</p>
+      <h1 class="h3 mb-2">Community Gallery</h1>
+      <p class="mb-0 gg-report-subtitle">Browse cutting reports and planting records, then open any card for full details.</p>
+    </div>
 
-        <div class="alert alert-warning" role="alert">For community safety: photos should not include identifiable faces, children, license plates, or private home details.</div>
-      </div>
+    <div class="gg-report-warning mb-4" role="alert">
+      <i class="fas fa-shield-alt"></i>
+      <span>For community safety: photos should not include identifiable faces, children, license plates, or private home details.</span>
     </div>
 
     <div class="row justify-content-center">
       <div class="col-lg-5 mb-4">
-        <div class="card shadow-sm h-100 gg-gallery-hub-card">
-          <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
-            <h2 class="h5 mb-0">Illegal Cutting Reports</h2>
-            <span class="badge badge-light">{{ report_count }}</span>
+        <article class="card shadow-sm h-100 gg-report-hub-card gg-report-hub-danger">
+          <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <h2 class="h5 mb-0">Illegal Cutting Reports</h2>
+              <span class="gg-report-count-pill">{{ report_count }}</span>
+            </div>
+            <p class="text-muted mb-4">See the full gallery of illegal cutting submissions with status, location, and uploaded evidence.</p>
+            <a href="{{ url_for('reports.cutting_gallery') }}" class="btn gg-btn-danger">Open Reports Gallery</a>
           </div>
-          <div class="card-body">
-            <p class="text-muted">See the full gallery of illegal cutting submissions with status, location, and uploaded evidence.</p>
-            <a href="{{ url_for('reports.cutting_gallery') }}" class="btn btn-danger">Open Reports Gallery</a>
-          </div>
-        </div>
+        </article>
       </div>
 
       <div class="col-lg-5 mb-4">
-        <div class="card shadow-sm h-100 gg-gallery-hub-card">
-          <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
-            <h2 class="h5 mb-0">Tree Planting Records</h2>
-            <span class="badge badge-light">{{ tree_count }}</span>
+        <article class="card shadow-sm h-100 gg-report-hub-card gg-report-hub-success">
+          <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <h2 class="h5 mb-0">Tree Planting Records</h2>
+              <span class="gg-report-count-pill">{{ tree_count }}</span>
+            </div>
+            <p class="text-muted mb-4">Explore planted tree entries with species, quantity, location, and uploader information.</p>
+            <a href="{{ url_for('reports.trees_gallery') }}" class="btn gg-btn-success">Open Trees Gallery</a>
           </div>
-          <div class="card-body">
-            <p class="text-muted">Explore planted tree entries with species, quantity, location, and uploader information.</p>
-            <a href="{{ url_for('reports.trees_gallery') }}" class="btn btn-success">Open Trees Gallery</a>
-          </div>
-        </div>
+        </article>
       </div>
     </div>
-  </div>
+  </section>
 {% endblock %}

@@ -4,54 +4,140 @@
   Home | Green Guard
 {% endblock %}
 
+{% block extra_css %}
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+{% endblock %}
+
 {% block content %}
   <section class="mx-auto mt-8 w-full max-w-6xl px-4 sm:px-6">
-    <div class="gg-hero relative overflow-hidden rounded-3xl p-8 sm:p-12">
-      <div class="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-xl"></div>
-      <div class="absolute -bottom-16 -left-12 h-44 w-44 rounded-full bg-emerald-100/20 blur-lg"></div>
-      <div class="relative max-w-3xl">
-        <p class="mb-4 inline-flex rounded-full border border-white/35 bg-white/10 px-4 py-1 text-sm font-medium tracking-wide text-emerald-50">CITIZEN FOREST ACTION</p>
-        <h1 class="mb-4 text-4xl font-extrabold leading-tight text-white sm:text-5xl">Protect Forests. Grow Community.</h1>
-        <p class="mb-7 text-base text-emerald-50 sm:text-lg">Green Guard helps citizens plant trees, report illegal cutting, and track collective environmental impact.</p>
-        <div class="flex flex-wrap gap-3">
-          <a href="{{ url_for('reports.plant_tree') }}" class="inline-flex items-center rounded-xl bg-white px-5 py-3 font-semibold text-emerald-800 shadow-soft transition hover:-translate-y-0.5 hover:bg-emerald-50">Plant Trees</a>
-          <a href="{{ url_for('reports.report_cutting') }}" class="inline-flex items-center rounded-xl border border-white/60 bg-white/10 px-5 py-3 font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/20">Report Cutting</a>
+    <div class="rounded-3xl bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-600 p-8 shadow-lg sm:p-12">
+      <h1 class="text-4xl font-extrabold leading-tight text-white sm:text-5xl">Plant trees. Track impact. Change the future.</h1>
+      <p class="mt-4 max-w-3xl text-base text-emerald-50 sm:text-lg">Join campaigns, upload planting proof, earn points, and help your city grow greener with transparent community impact.</p>
+      <div class="mt-6 flex flex-wrap gap-3">
+        <a href="{{ url_for('volunteer.campaigns_explore') }}" class="rounded-xl bg-white px-5 py-3 font-semibold text-emerald-800 hover:bg-emerald-50">Join as Volunteer</a>
+        <a href="{{ url_for('main.sponsors_page') }}" class="rounded-xl border border-white/60 bg-white/10 px-5 py-3 font-semibold text-white hover:bg-white/20">Become a Sponsor</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="mx-auto my-10 grid w-full max-w-6xl grid-cols-1 gap-4 px-4 sm:grid-cols-3 sm:px-6">
+    <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <p class="text-sm font-medium text-slate-500">Trees planted</p>
+      <h2 class="mt-2 text-3xl font-bold text-slate-900">{{ total_trees }}</h2>
+    </article>
+    <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <p class="text-sm font-medium text-slate-500">Total donations</p>
+      <h2 class="mt-2 text-3xl font-bold text-slate-900">${{ '%.2f'|format(total_donations) }}</h2>
+    </article>
+    <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <p class="text-sm font-medium text-slate-500">Active users</p>
+      <h2 class="mt-2 text-3xl font-bold text-slate-900">{{ total_users }}</h2>
+    </article>
+  </section>
+
+  <section class="mx-auto mb-10 w-full max-w-6xl px-4 sm:px-6">
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h3 class="text-lg font-semibold text-slate-900">How It Works</h3>
+      <div class="mt-4 grid gap-4 md:grid-cols-3">
+        <div class="rounded-xl border border-slate-200 p-4">
+          <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">Step 1</p>
+          <p class="mt-2 text-sm text-slate-700">Join or create a campaign.</p>
+        </div>
+        <div class="rounded-xl border border-slate-200 p-4">
+          <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">Step 2</p>
+          <p class="mt-2 text-sm text-slate-700">Plant trees and upload proof.</p>
+        </div>
+        <div class="rounded-xl border border-slate-200 p-4">
+          <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">Step 3</p>
+          <p class="mt-2 text-sm text-slate-700">Earn points and track impact.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="mx-auto my-10 grid w-full max-w-6xl grid-cols-1 gap-4 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
-    <div class="gg-stat-card rounded-2xl bg-white p-6">
-      <p class="mb-1 text-sm font-medium text-slate-500">Trees Planted</p>
-      <h2 class="gg-stat-number text-3xl">{{ total_trees }}</h2>
-    </div>
-    <div class="gg-stat-card rounded-2xl bg-white p-6">
-      <p class="mb-1 text-sm font-medium text-slate-500">Cutting Reports</p>
-      <h2 class="gg-stat-number text-3xl">{{ total_reports }}</h2>
-    </div>
-    <div class="gg-stat-card rounded-2xl bg-white p-6">
-      <p class="mb-1 text-sm font-medium text-slate-500">Community Members</p>
-      <h2 class="gg-stat-number text-3xl">{{ total_users }}</h2>
-    </div>
-    <div class="gg-stat-card rounded-2xl bg-white p-6">
-      <p class="mb-1 text-sm font-medium text-slate-500">Estimated CO2 Saved</p>
-      <h2 class="gg-stat-number text-3xl">{{ co2_display }}</h2>
+  <section class="mx-auto mb-10 grid w-full max-w-6xl grid-cols-1 gap-4 px-4 sm:px-6 lg:grid-cols-2">
+    <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h3 class="text-lg font-semibold text-slate-900">Top Volunteers</h3>
+      <ul class="mt-3 space-y-2 text-sm text-slate-700">
+        {% for row in top_volunteers %}
+          <li class="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-2">
+            <span>{{ row.user.username }}</span>
+            <span>{{ row.points }} pts</span>
+          </li>
+        {% else %}
+          <li class="text-slate-500">No volunteer activity yet.</li>
+        {% endfor %}
+      </ul>
+    </article>
+
+    <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h3 class="text-lg font-semibold text-slate-900">Top Sponsors</h3>
+      <ul class="mt-3 space-y-2 text-sm text-slate-700">
+        {% for row in top_sponsors %}
+          <li class="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-2">
+            <span>{{ row.user.username }}</span>
+            <span>${{ '%.2f'|format(row.total_amount) }}</span>
+          </li>
+        {% else %}
+          <li class="text-slate-500">No sponsor activity yet.</li>
+        {% endfor %}
+      </ul>
+    </article>
+  </section>
+
+  <section class="mx-auto mb-10 w-full max-w-6xl px-4 sm:px-6">
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div class="mb-3 flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-slate-900">Map Preview</h3>
+        <a href="{{ url_for('main.map_view') }}" class="text-sm font-semibold text-emerald-700 hover:text-emerald-900">Open full map</a>
+      </div>
+      <div id="home-map-preview" class="h-72 rounded-xl border border-slate-200"></div>
     </div>
   </section>
 
-  <section class="mx-auto mb-14 grid w-full max-w-6xl grid-cols-1 gap-4 px-4 sm:px-6 md:grid-cols-3">
-    <div class="rounded-2xl border border-emerald-100 bg-white p-6 shadow-soft">
-      <h3 class="mb-2 text-lg font-semibold text-emerald-900">Map Tracking</h3>
-      <p class="text-sm text-slate-600">Visualize planted trees and reports live on the shared city map.</p>
-    </div>
-    <div class="rounded-2xl border border-emerald-100 bg-white p-6 shadow-soft">
-      <h3 class="mb-2 text-lg font-semibold text-emerald-900">Community Ranking</h3>
-      <p class="text-sm text-slate-600">Earn impact points and climb the leaderboard through verified actions.</p>
-    </div>
-    <div class="rounded-2xl border border-emerald-100 bg-white p-6 shadow-soft">
-      <h3 class="mb-2 text-lg font-semibold text-emerald-900">Actionable Reports</h3>
-      <p class="text-sm text-slate-600">Flag illegal cutting quickly so it can be reviewed and resolved faster.</p>
+  <section class="mx-auto mb-14 w-full max-w-6xl px-4 sm:px-6">
+    <div class="rounded-2xl bg-emerald-600 p-6 text-white shadow-sm">
+      <h3 class="text-2xl font-bold">Start your first campaign today</h3>
+      <p class="mt-2 text-emerald-50">Bring your local community together and make your impact visible on the map and leaderboard.</p>
+      <a href="{{ url_for('volunteer.campaigns_create') }}" class="mt-4 inline-block rounded-xl bg-white px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50">Create Campaign</a>
     </div>
   </section>
+{% endblock %}
+
+{% block extra_js %}
+  <script id="home-latest-trees" type="application/json">
+    {
+      {
+        latest_trees_json | tojson
+      }
+    }
+  </script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script>
+    const mapContainer = document.getElementById('home-map-preview')
+    if (mapContainer) {
+      const previewMap = L.map(mapContainer).setView([20, 0], 2)
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(previewMap)
+    
+      const treeDataEl = document.getElementById('home-latest-trees')
+      const treeData = treeDataEl ? JSON.parse(treeDataEl.textContent || '[]') : []
+      const markers = []
+      treeData.forEach((tree) => {
+        if (typeof tree.latitude !== 'number' || typeof tree.longitude !== 'number') {
+          return
+        }
+        const marker = L.marker([tree.latitude, tree.longitude]).addTo(previewMap)
+        marker.bindPopup(`<strong>${tree.species}</strong><br/>${tree.quantity} trees<br/>by ${tree.username}`)
+        markers.push(marker)
+      })
+    
+      if (markers.length > 0) {
+        const group = L.featureGroup(markers)
+        previewMap.fitBounds(group.getBounds().pad(0.25))
+      }
+    }
+  </script>
 {% endblock %}

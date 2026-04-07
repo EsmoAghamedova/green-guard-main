@@ -35,7 +35,7 @@
                   {% if user.is_admin %}
                     <span class="badge badge-warning">Admin</span>
                   {% else %}
-                    <span class="badge badge-secondary">User</span>
+                    <span class="badge badge-secondary">{{ user.role|replace('_', ' ')|title }}</span>
                   {% endif %}
                 </td>
                 <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>

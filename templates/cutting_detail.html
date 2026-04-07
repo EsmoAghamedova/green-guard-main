@@ -5,17 +5,18 @@
 {% endblock %}
 
 {% block content %}
-  <div class="container my-5">
+  <section class="container my-5 gg-report-shell">
     <div class="mb-3">
-      <a href="{{ url_for('reports.cutting_gallery') }}" class="btn btn-outline-secondary">Back to Reports Gallery</a>
+      <a href="{{ url_for('reports.cutting_gallery') }}" class="btn gg-btn-soft">Back to Reports Gallery</a>
     </div>
 
-    <div class="card shadow-sm">
+    <article class="card shadow-sm gg-report-detail-card gg-report-detail-danger">
       {% if report.image_filename %}
         <img src="{{ url_for('static', filename='uploads/' ~ report.image_filename) }}" class="card-img-top gg-detail-image" alt="Cutting report evidence image" />
       {% endif %}
 
       <div class="card-body">
+        <p class="gg-report-kicker mb-2">Incident Report</p>
         <h1 class="h4 mb-3">Illegal Cutting Report #{{ report.id }}</h1>
         {% if current_user.is_authenticated and current_user.id == report.user_id or current_user.is_admin %}
           <div class="d-flex flex-wrap mb-3">
@@ -27,7 +28,7 @@
           </div>
         {% endif %}
         <p class="mb-3">
-          <strong>Status:</strong> <span class="badge badge-secondary text-uppercase">{{ report.status }}</span>
+          <strong>Status:</strong> <span class="badge gg-report-status-danger text-uppercase">{{ report.status }}</span>
         </p>
         <p class="mb-3">{{ report.description }}</p>
         <p class="mb-1 text-muted">
@@ -45,6 +46,6 @@
           </p>
         {% endif %}
       </div>
-    </div>
-  </div>
+    </article>
+  </section>
 {% endblock %}

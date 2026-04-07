@@ -31,6 +31,15 @@
               </div>
 
               <div class="form-group">
+                {{ form.role.label }}
+                {{ form.role(class='form-control') }}
+                <small class="form-text text-muted">Choose the role that best describes how you want to participate in GreenGuard.</small>
+                {% for error in form.role.errors %}
+                  <small class="text-danger d-block">{{ error }}</small>
+                {% endfor %}
+              </div>
+
+              <div class="form-group">
                 {{ form.password.label }}
                 {{ form.password(class='form-control', minlength='8', maxlength='128', autocomplete='new-password') }}
                 <small class="form-text text-muted">Use at least 8 characters with uppercase, lowercase, number, and special character. Spaces are not allowed.</small>
