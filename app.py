@@ -66,7 +66,8 @@ def create_app() -> Flask:
             return None
 
         if endpoint:
-            flash("Admin access is limited to Dashboard, Finance, Profile, and Settings.", "warning")
+            flash(
+                "Admin access is limited to Dashboard, Finance, Profile, and Settings.", "warning")
         return redirect(url_for("admin.dashboard"))
 
     with app.app_context():
