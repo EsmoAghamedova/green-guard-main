@@ -48,6 +48,23 @@ for category, choices in DONATION_ITEM_CHOICES_BY_CATEGORY.items():
     for value, label in choices:
         DONATION_ITEM_CHOICES.append((f"{category}:{value}", label))
 
+TREE_SPECIES_CHOICES = [
+    ("", "Select species"),
+    ("oak_saplings", "Oak Saplings"),
+    ("pine_seedlings", "Pine Seedlings"),
+    ("maple_seedlings", "Maple Seedlings"),
+    ("cedar_seedlings", "Cedar Seedlings"),
+    ("mixed_native_pack", "Mixed Native Tree Pack"),
+]
+
+TREE_SPECIES_DEFAULT_PRICES = {
+    "oak_saplings": 4.0,
+    "pine_seedlings": 3.5,
+    "maple_seedlings": 4.5,
+    "cedar_seedlings": 5.0,
+    "mixed_native_pack": 4.0,
+}
+
 
 def validate_strong_password(value: str) -> None:
     if re.search(r"\s", value):
@@ -323,6 +340,15 @@ class SupportDonationForm(FlaskForm):
                            validators=[InputRequired()])
     donation_item = SelectField("Item to Donate", choices=DONATION_ITEM_CHOICES,
                                 validators=[InputRequired()])
+    tree_species = SelectField(
+        "Tree Species",
+        choices=TREE_SPECIES_CHOICES,
+        validators=[Optional()],
+    )
+    price_per_tree = DecimalField(
+        "Price Per Tree (USD)",
+        validators=[Optional(), NumberRange(min=0.5, max=10000)],
+    )
     quantity = IntegerField("Number of Trees", validators=[
                             Optional(), NumberRange(min=1, max=100000)])
     amount = DecimalField("Amount (USD)", validators=[
@@ -332,7 +358,7 @@ class SupportDonationForm(FlaskForm):
     )
     note = TextAreaField("Optional Note", validators=[
                          Optional(), Length(max=500)])
-    submit = SubmitField("Submit Donation")
+    submit = SubmitField("Continue to Payment")
 
     def validate_category(self, category):
         allowed_values = {choice[0] for choice in DONATION_CATEGORY_CHOICES}
@@ -340,6 +366,9 @@ class SupportDonationForm(FlaskForm):
             raise ValidationError("Please select a valid donation category.")
 
     def validate_donation_item(self, donation_item):
+        if self.category.data == "plants" and self.tree_species.data:
+            return
+
         raw_value = donation_item.data or ""
         if ":" not in raw_value:
             raise ValidationError("Please select a valid donation item.")
@@ -355,6 +384,27 @@ class SupportDonationForm(FlaskForm):
 
         has_quantity = self.quantity.data is not None
         has_amount = self.amount.data is not None
+
+        if self.category.data == "plants":
+            allowed_species = {choice[0]
+                               for choice in TREE_SPECIES_CHOICES if choice[0]}
+            if not self.tree_species.data or self.tree_species.data not in allowed_species:
+                self.tree_species.errors.append(
+                    "Please choose a valid tree species.")
+                return False
+
+            if self.price_per_tree.data is None:
+                self.price_per_tree.errors.append(
+                    "Enter price per tree for tree funding.")
+                return False
+
+            if not has_quantity:
+                self.quantity.errors.append(
+                    "Enter number of trees for tree funding.")
+                return False
+
+            return True
+
         if not has_quantity and not has_amount:
             error_message = "Enter donation amount, number of trees, or both."
             self.quantity.errors.append(error_message)

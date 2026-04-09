@@ -30,6 +30,9 @@ class User(UserMixin, db.Model):
     created_campaigns = db.relationship(
         "Campaign", backref="creator", lazy=True, foreign_keys="Campaign.creator_user_id"
     )
+    merch_purchases = db.relationship(
+        "MerchPurchase", backref="user", lazy=True, cascade="all, delete-orphan"
+    )
 
 
 class TreeRecord(db.Model):
@@ -142,6 +145,22 @@ class SupportDonation(db.Model):
     quantity = db.Column(db.Integer, default=1, nullable=False)
     amount = db.Column(db.Numeric(10, 2), nullable=False)
     points = db.Column(db.Integer, default=0, nullable=False)
+    note = db.Column(db.String(500))
+    created_at = db.Column(
+        db.DateTime, default=datetime.utcnow, nullable=False)
+
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
+
+class MerchPurchase(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    merch_key = db.Column(db.String(80), nullable=False)
+    merch_name = db.Column(db.String(120), nullable=False)
+    quantity = db.Column(db.Integer, default=1, nullable=False)
+    payment_mode = db.Column(db.String(20), nullable=False, default="money")
+    amount_usd = db.Column(db.Numeric(10, 2), default=0, nullable=False)
+    points_spent = db.Column(db.Integer, default=0, nullable=False)
+    trees_supported = db.Column(db.Integer, default=0, nullable=False)
     note = db.Column(db.String(500))
     created_at = db.Column(
         db.DateTime, default=datetime.utcnow, nullable=False)

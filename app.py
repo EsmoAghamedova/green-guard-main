@@ -14,6 +14,9 @@ def create_app() -> Flask:
         "SECRET_KEY", "green-guard-dev-secret")
     app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{os.path.join(base_dir, 'green_guard.db')}"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+        "connect_args": {"timeout": 30},
+    }
     app.config["UPLOAD_FOLDER"] = os.path.join(base_dir, "static", "uploads")
     app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
     app.config["GFW_DAILY_SYNC_TIME"] = os.getenv(

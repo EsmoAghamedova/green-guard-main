@@ -5,10 +5,10 @@ from flask_login import current_user
 
 
 ROLE_HOME = {
-    "individual": "main.create_or_report",
+    "individual": "main.sponsorship_donations",
     "business": "main.business_dashboard",
-    "volunteer": "main.explore",
-    "citizen": "main.create_or_report",
+    "volunteer": "main.volunteer_dashboard",
+    "citizen": "main.profile",
 }
 
 

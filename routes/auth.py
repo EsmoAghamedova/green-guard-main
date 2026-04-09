@@ -1,10 +1,14 @@
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+import time
+
+from flask import Blueprint, current_app, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
+from sqlalchemy.exc import OperationalError
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from extensions import db
 from forms import AccountSettingsForm, LoginForm, RegisterForm
 from models import User
+from permissions import redirect_for_role
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -12,7 +16,9 @@ auth_bp = Blueprint("auth", __name__)
 @auth_bp.route("/register", methods=["GET", "POST"])
 def register():
     if current_user.is_authenticated:
-        return redirect(url_for("main.index"))
+        if current_user.is_admin:
+            return redirect(url_for("admin.dashboard"))
+        return redirect_for_role(current_user.role)
 
     form = RegisterForm()
     if form.validate_on_submit():
@@ -24,7 +30,25 @@ def register():
             is_admin=False,
         )
         db.session.add(user)
-        db.session.commit()
+        for attempt in range(2):
+            try:
+                db.session.commit()
+                break
+            except OperationalError as error:
+                db.session.rollback()
+                is_locked = "database is locked" in str(error).lower()
+                if is_locked and attempt == 0:
+                    # Brief retry handles transient SQLite writer contention.
+                    time.sleep(0.35)
+                    db.session.add(user)
+                    continue
+
+                current_app.logger.warning(
+                    "Register failed due to database operation error: %s", error)
+                flash(
+                    "The system is busy right now. Please try registration again in a moment.", "warning")
+                return render_template("auth/register.html", form=form)
+
         flash("Registration successful. Please log in.", "success")
         return redirect(url_for("auth.login"))
 
@@ -34,7 +58,9 @@ def register():
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for("main.index"))
+        if current_user.is_admin:
+            return redirect(url_for("admin.dashboard"))
+        return redirect_for_role(current_user.role)
 
     form = LoginForm()
     if form.validate_on_submit():
@@ -46,7 +72,11 @@ def login():
             flash("Welcome back!", "success")
 
             next_page = request.args.get("next")
-            return redirect(next_page or url_for("main.index"))
+            if next_page:
+                return redirect(next_page)
+            if user.is_admin:
+                return redirect(url_for("admin.dashboard"))
+            return redirect_for_role(user.role)
 
         flash("Invalid email or password.", "danger")
 

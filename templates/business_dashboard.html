@@ -58,6 +58,33 @@
       </article>
     </div>
 
+    <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <p class="text-xs uppercase tracking-wide text-slate-500">Dynamic CO2 Absorbed</p>
+        <p class="mt-2 text-2xl font-bold text-slate-900">{{ '%.1f'|format(sponsor_impact_data.co2_absorbed_kg) }} kg</p>
+      </article>
+      <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <p class="text-xs uppercase tracking-wide text-slate-500">Dynamic Oxygen Produced</p>
+        <p class="mt-2 text-2xl font-bold text-slate-900">{{ '%.1f'|format(sponsor_impact_data.oxygen_produced_kg) }} kg</p>
+      </article>
+      <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <p class="text-xs uppercase tracking-wide text-slate-500">Wildlife Supported</p>
+        <p class="mt-2 text-2xl font-bold text-slate-900">{{ sponsor_impact_data.wildlife_supported }}</p>
+      </article>
+      <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <p class="text-xs uppercase tracking-wide text-slate-500">Tree-Years of Impact</p>
+        <p class="mt-2 text-2xl font-bold text-slate-900">{{ '%.2f'|format(sponsor_impact_data.tree_years) }}</p>
+      </article>
+    </div>
+
+    <article class="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm">
+      <h2 class="text-lg font-semibold text-emerald-900">Sponsorship Impact Results</h2>
+      <p class="mt-2 text-sm text-emerald-900">{{ sponsor_impact_data.message }}</p>
+      <p class="mt-2 text-sm text-emerald-900">Equivalent to about <strong>{{ '%.0f'|format(sponsor_impact_data.equivalent_car_km) }} km</strong> of car travel emissions.</p>
+      <p class="mt-1 text-sm text-emerald-900">About <strong>{{ '%.2f'|format(sponsor_impact_data.equivalent_person_years) }} person-years</strong> of average annual CO2 footprint.</p>
+      <p class="mt-1 text-sm text-emerald-900">Cooling effect: <strong>{{ sponsor_impact_data.cooling_effect }}</strong></p>
+    </article>
+
     <article class="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <h2 class="text-lg font-semibold text-slate-900">Recent reports (proof from volunteers)</h2>
       {% if recent_volunteer_proofs %}

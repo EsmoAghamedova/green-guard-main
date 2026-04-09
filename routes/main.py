@@ -1,4 +1,5 @@
 import json
+import hashlib
 import math
 import time
 from csv import DictReader
@@ -10,13 +11,13 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 from sqlalchemy.exc import IntegrityError
 
-from flask import Blueprint, current_app, flash, jsonify, redirect, render_template, request, url_for
+from flask import Blueprint, current_app, flash, jsonify, redirect, render_template, request, session, url_for
 from flask_login import current_user, login_required
 
 from extensions import db
-from forms import ContactForm, DeleteForm, PlantTreeForm, SupportDonationForm, VolunteerCampaignCreateForm, VolunteerCampaignJoinForm
-from models import Campaign, CuttingReport, GFWLocation, GFWLocationSyncState, SupportDonation, TreeRecord, User, VolunteerCampaignSignup
-from permissions import role_required
+from forms import ContactForm, DeleteForm, PlantTreeForm, SupportDonationForm, TREE_SPECIES_DEFAULT_PRICES, VolunteerCampaignCreateForm, VolunteerCampaignJoinForm
+from models import Campaign, CuttingReport, GFWLocation, GFWLocationSyncState, MerchPurchase, SupportDonation, TreeRecord, User, VolunteerCampaignSignup
+from permissions import redirect_for_role, role_required
 
 main_bp = Blueprint("main", __name__)
 
@@ -91,6 +92,57 @@ GFW_GLOBAL_HOTSPOT_SYNC_POINTS = [
         "lat": 39.8, "lng": -3.1, "zoom": 7},
     {"country_name": "Greece", "country_code": "GR",
         "lat": 38.5, "lng": 22.2, "zoom": 8},
+]
+
+MERCH_ITEMS = [
+    {
+        "key": "eco_shirt",
+        "name": "Eco Shirt",
+        "price": 20,
+        "points": 200,
+        "trees": 2,
+        "image": "images/merch/eco-shirt.png",
+    },
+    {
+        "key": "nature_mug",
+        "name": "Nature Mug",
+        "price": 12,
+        "points": 120,
+        "trees": 1,
+        "image": "images/merch/nature-mug.png",
+    },
+    {
+        "key": "tote_bag",
+        "name": "Tote Bag",
+        "price": 18,
+        "points": 180,
+        "trees": 2,
+        "image": "images/merch/tote-bag.png",
+    },
+    {
+        "key": "eco_notebook",
+        "name": "Eco Notebook",
+        "price": 15,
+        "points": 150,
+        "trees": 1,
+        "image": "images/merch/eco-notebook.png",
+    },
+    {
+        "key": "sweatshirt",
+        "name": "Sweatshirt",
+        "price": 10,
+        "points": 100,
+        "trees": 1,
+        "image": "images/merch/sweatshirt.png",
+    },
+    {
+        "key": "reusable_bottle",
+        "name": "Bottle",
+        "price": 25,
+        "points": 250,
+        "trees": 3,
+        "image": "images/merch/bottle.png",
+    },
 ]
 
 
@@ -377,6 +429,12 @@ def calculate_donation_points(category: str, quantity: int, amount: float) -> in
     return base_points + amount_points
 
 
+def build_payment_transaction_id(user_id: int, payment_method: str, amount: float) -> str:
+    salt = f"{time.time_ns()}|{user_id}|{payment_method}|{amount:.2f}"
+    digest = hashlib.sha256(salt.encode("utf-8")).hexdigest()
+    return f"PAY-{digest[:12].upper()}"
+
+
 def _get_sync_state() -> GFWLocationSyncState:
     state = GFWLocationSyncState.query.filter_by(
         name=GFW_SYNC_STATE_NAME).first()
@@ -441,6 +499,7 @@ def sync_gfw_locations(force: bool = False) -> dict:
     fetched_any_alerts = False
 
     for sync_point in _load_worldwide_sync_points():
+        sync_point_changed = False
         try:
             alerts = fetch_gfw_fire_alerts(
                 sync_point["lat"], sync_point["lng"], sync_point["zoom"]
@@ -473,6 +532,7 @@ def sync_gfw_locations(force: bool = False) -> dict:
                         db.session.flush()
                     existing_locations[unique_key] = location
                     created_count += 1
+                    sync_point_changed = True
                 except IntegrityError:
                     # Another process may have inserted the same alert key in parallel.
                     location = GFWLocation.query.filter_by(
@@ -515,6 +575,18 @@ def sync_gfw_locations(force: bool = False) -> dict:
                 country_name, alert)
             location.source = "nasa_viirs_fire_alerts"
             location.last_seen_at = now
+            sync_point_changed = True
+
+        if sync_point_changed:
+            try:
+                db.session.commit()
+            except IntegrityError:
+                db.session.rollback()
+                current_app.logger.warning(
+                    "Skipped a sync-point commit due to concurrent write conflict for %s (%s)",
+                    sync_point.get("country_name"),
+                    sync_point.get("country_code"),
+                )
 
         # Small pacing delay reduces DNS/network instability during global sweeps.
         time.sleep(0.1)
@@ -585,6 +657,11 @@ def load_gfw_locations() -> list[GFWLocation]:
 
 @main_bp.route("/")
 def index():
+    if current_user.is_authenticated:
+        if current_user.is_admin:
+            return redirect(url_for("admin.dashboard"))
+        return redirect_for_role(current_user.role)
+
     total_trees = TreeRecord.query.with_entities(TreeRecord.quantity).all()
     total_tree_count = sum(item.quantity for item in total_trees)
     total_reports = CuttingReport.query.count()
@@ -1025,6 +1102,160 @@ def _calculate_volunteer_score(user: User) -> dict:
     }
 
 
+def _calculate_tree_impact(tree_records: list[TreeRecord]) -> dict:
+    now = datetime.utcnow()
+    total_trees = sum(tree.quantity or 0 for tree in tree_records)
+
+    total_tree_years = 0.0
+    for tree in tree_records:
+        quantity = tree.quantity or 0
+        if quantity <= 0 or not tree.created_at:
+            continue
+
+        elapsed_days = max(
+            (now - tree.created_at).total_seconds() / 86400.0, 0.0)
+        elapsed_years = elapsed_days / 365.25
+        total_tree_years += quantity * elapsed_years
+
+    co2_absorbed_kg = total_tree_years * 22.0
+    oxygen_produced_kg = total_tree_years * 110.0
+    wildlife_supported = total_trees * 10
+
+    if total_trees >= 300:
+        cooling_effect = "Strong neighborhood cooling and shade contribution"
+    elif total_trees >= 100:
+        cooling_effect = "Noticeable local cooling and shade contribution"
+    elif total_trees >= 25:
+        cooling_effect = "Growing cooling effect in your planted areas"
+    elif total_trees > 0:
+        cooling_effect = "Early-stage cooling effect that will grow each year"
+    else:
+        cooling_effect = "Plant trees to start generating local cooling benefits"
+
+    # Approximate passenger car emissions around 0.192 kg CO2 per km.
+    equivalent_car_km = co2_absorbed_kg / 0.192 if co2_absorbed_kg > 0 else 0.0
+    # Approximate annual per-person footprint around 4,600 kg CO2.
+    equivalent_person_years = co2_absorbed_kg / \
+        4600.0 if co2_absorbed_kg > 0 else 0.0
+
+    message = (
+        f"You helped remove about {co2_absorbed_kg:.1f} kg of CO2 from the atmosphere. "
+        "Your trees will continue working for years as they grow."
+    )
+
+    return {
+        "total_trees": total_trees,
+        "tree_years": total_tree_years,
+        "co2_absorbed_kg": co2_absorbed_kg,
+        "oxygen_produced_kg": oxygen_produced_kg,
+        "wildlife_supported": wildlife_supported,
+        "cooling_effect": cooling_effect,
+        "equivalent_car_km": equivalent_car_km,
+        "equivalent_person_years": equivalent_person_years,
+        "message": message,
+    }
+
+
+def _calculate_sponsorship_impact(donations: list[SupportDonation]) -> dict:
+    now = datetime.utcnow()
+    plant_donations = [
+        donation
+        for donation in donations
+        if donation.category == "plants" and (donation.quantity or 0) > 0
+    ]
+    total_trees = sum(donation.quantity or 0 for donation in plant_donations)
+
+    total_tree_years = 0.0
+    for donation in plant_donations:
+        quantity = donation.quantity or 0
+        if quantity <= 0 or not donation.created_at:
+            continue
+
+        elapsed_days = max(
+            (now - donation.created_at).total_seconds() / 86400.0, 0.0)
+        elapsed_years = elapsed_days / 365.25
+        total_tree_years += quantity * elapsed_years
+
+    co2_absorbed_kg = total_tree_years * 22.0
+    oxygen_produced_kg = total_tree_years * 110.0
+    wildlife_supported = total_trees * 10
+    equivalent_car_km = co2_absorbed_kg / 0.192 if co2_absorbed_kg > 0 else 0.0
+    equivalent_person_years = co2_absorbed_kg / \
+        4600.0 if co2_absorbed_kg > 0 else 0.0
+
+    if total_trees >= 300:
+        cooling_effect = "Strong neighborhood cooling and shade contribution"
+    elif total_trees >= 100:
+        cooling_effect = "Noticeable local cooling and shade contribution"
+    elif total_trees >= 25:
+        cooling_effect = "Growing cooling effect in your planted areas"
+    elif total_trees > 0:
+        cooling_effect = "Early-stage cooling effect that will grow each year"
+    else:
+        cooling_effect = "Sponsor trees to start generating local cooling benefits"
+
+    message = (
+        f"Your sponsored trees removed about {co2_absorbed_kg:.1f} kg of CO2 over time. "
+        "Their impact keeps increasing as months and years pass."
+    )
+
+    return {
+        "total_trees": total_trees,
+        "tree_years": total_tree_years,
+        "co2_absorbed_kg": co2_absorbed_kg,
+        "oxygen_produced_kg": oxygen_produced_kg,
+        "wildlife_supported": wildlife_supported,
+        "cooling_effect": cooling_effect,
+        "equivalent_car_km": equivalent_car_km,
+        "equivalent_person_years": equivalent_person_years,
+        "message": message,
+    }
+
+
+def _merge_impact_data(primary: dict, secondary: dict) -> dict:
+    total_trees = (primary.get("total_trees", 0) or 0) + \
+        (secondary.get("total_trees", 0) or 0)
+    tree_years = (primary.get("tree_years", 0.0) or 0.0) + \
+        (secondary.get("tree_years", 0.0) or 0.0)
+    co2_absorbed_kg = (primary.get("co2_absorbed_kg", 0.0) or 0.0) + \
+        (secondary.get("co2_absorbed_kg", 0.0) or 0.0)
+    oxygen_produced_kg = (primary.get("oxygen_produced_kg", 0.0) or 0.0) + \
+        (secondary.get("oxygen_produced_kg", 0.0) or 0.0)
+    wildlife_supported = (primary.get("wildlife_supported", 0) or 0) + \
+        (secondary.get("wildlife_supported", 0) or 0)
+
+    if total_trees >= 300:
+        cooling_effect = "Strong neighborhood cooling and shade contribution"
+    elif total_trees >= 100:
+        cooling_effect = "Noticeable local cooling and shade contribution"
+    elif total_trees >= 25:
+        cooling_effect = "Growing cooling effect in your planted areas"
+    elif total_trees > 0:
+        cooling_effect = "Early-stage cooling effect that will grow each year"
+    else:
+        cooling_effect = "Plant or sponsor trees to start generating local cooling benefits"
+
+    equivalent_car_km = co2_absorbed_kg / 0.192 if co2_absorbed_kg > 0 else 0.0
+    equivalent_person_years = co2_absorbed_kg / \
+        4600.0 if co2_absorbed_kg > 0 else 0.0
+    message = (
+        f"Your combined planting and sponsorship impact removed about {co2_absorbed_kg:.1f} kg of CO2. "
+        "This grows automatically over time."
+    )
+
+    return {
+        "total_trees": total_trees,
+        "tree_years": tree_years,
+        "co2_absorbed_kg": co2_absorbed_kg,
+        "oxygen_produced_kg": oxygen_produced_kg,
+        "wildlife_supported": wildlife_supported,
+        "cooling_effect": cooling_effect,
+        "equivalent_car_km": equivalent_car_km,
+        "equivalent_person_years": equivalent_person_years,
+        "message": message,
+    }
+
+
 @main_bp.route("/leaderboard/volunteers")
 def volunteer_leaderboard():
     volunteer_users = User.query.filter(
@@ -1063,6 +1294,43 @@ def volunteer_leaderboard():
         "volunteer_leaderboard.html",
         leaderboard=rows,
         leaderboard_group="Volunteer Leaderboard",
+    )
+
+
+@main_bp.route("/volunteer/dashboard")
+@login_required
+@role_required("volunteer")
+def volunteer_dashboard():
+    score_data = _calculate_volunteer_score(current_user)
+
+    user_trees = TreeRecord.query.filter_by(user_id=current_user.id).all()
+    recent_trees = (
+        TreeRecord.query.filter_by(user_id=current_user.id)
+        .order_by(TreeRecord.created_at.desc())
+        .limit(5)
+        .all()
+    )
+    recent_reports = (
+        CuttingReport.query.filter_by(user_id=current_user.id)
+        .order_by(CuttingReport.created_at.desc())
+        .limit(5)
+        .all()
+    )
+    joined_campaigns = (
+        VolunteerCampaignSignup.query.filter_by(user_id=current_user.id)
+        .order_by(VolunteerCampaignSignup.created_at.desc())
+        .limit(5)
+        .all()
+    )
+    impact_data = _calculate_tree_impact(user_trees)
+
+    return render_template(
+        "volunteer_dashboard.html",
+        score_data=score_data,
+        recent_trees=recent_trees,
+        recent_reports=recent_reports,
+        joined_campaigns=joined_campaigns,
+        impact_data=impact_data,
     )
 
 
@@ -1150,6 +1418,7 @@ def business_dashboard():
         .limit(6)
         .all()
     )
+    sponsor_impact_data = _calculate_sponsorship_impact(business_donations)
 
     return render_template(
         "business_dashboard.html",
@@ -1169,6 +1438,7 @@ def business_dashboard():
         trees_json=map_payload["trees"],
         reports_json=map_payload["reports"],
         recent_volunteer_proofs=recent_volunteer_proofs,
+        sponsor_impact_data=sponsor_impact_data,
     )
 
 
@@ -1226,6 +1496,9 @@ def sponsorship_donations():
         package = package_options[package_key]
         form.category.data = "plants"
         form.donation_item.data = "plants:mixed_native_pack"
+        form.tree_species.data = "mixed_native_pack"
+        form.price_per_tree.data = round(
+            package["amount"] / package["trees"], 2)
         form.quantity.data = package["trees"]
         form.amount.data = package["amount"]
 
@@ -1235,17 +1508,24 @@ def sponsorship_donations():
             form.campaign_id.data = selected_campaign_id
 
     if form.validate_on_submit():
-        selected_item = form.donation_item.data
-        _, item_key = selected_item.split(":", 1)
-        amount_value = float(
-            form.amount.data) if form.amount.data is not None else 0.0
         quantity_value = int(
             form.quantity.data) if form.quantity.data is not None else 0
+        amount_value = float(
+            form.amount.data) if form.amount.data is not None else 0.0
+        item_key = ""
 
-        if quantity_value <= 0 and amount_value > 0:
-            quantity_value = max(1, int(round(amount_value / 4)))
-        if amount_value <= 0 and quantity_value > 0:
-            amount_value = float(quantity_value * 4)
+        if form.category.data == "plants":
+            item_key = form.tree_species.data
+            unit_price = float(form.price_per_tree.data)
+            amount_value = round(quantity_value * unit_price, 2)
+        else:
+            selected_item = form.donation_item.data
+            _, item_key = selected_item.split(":", 1)
+
+            if quantity_value <= 0 and amount_value > 0:
+                quantity_value = max(1, int(round(amount_value / 4)))
+            if amount_value <= 0 and quantity_value > 0:
+                amount_value = float(quantity_value * 4)
 
         points = calculate_donation_points(
             form.category.data, quantity_value, amount_value)
@@ -1256,12 +1536,17 @@ def sponsorship_donations():
             commission_rate = 0.10
         else:
             commission_rate = 0.15
+
         commission_amount = amount_value * commission_rate
         project_funding_amount = amount_value - commission_amount
 
         note_segments = []
         if form.note.data:
             note_segments.append(form.note.data.strip())
+        if form.category.data == "plants":
+            note_segments.append(
+                f"Tree species: {item_key} | Unit price: ${float(form.price_per_tree.data):.2f}"
+            )
         if form.campaign_id.data:
             selected_campaign = next(
                 (campaign for campaign in campaigns if campaign.id ==
@@ -1277,22 +1562,17 @@ def sponsorship_donations():
         note_segments.append(
             f"Project allocation ${project_funding_amount:.2f}")
 
-        donation = SupportDonation(
-            user_id=current_user.id,
-            category=form.category.data,
-            donation_item=item_key,
-            quantity=quantity_value,
-            amount=amount_value,
-            points=points,
-            note=" | ".join(note_segments),
-        )
-        db.session.add(donation)
-        db.session.commit()
-        flash(
-            f"Sponsorship recorded. Platform commission: ${commission_amount:.2f}; project funding: ${project_funding_amount:.2f}.",
-            "success",
-        )
-        return redirect(url_for("main.sponsorship_donations"))
+        session["pending_sponsorship_payment"] = {
+            "user_id": current_user.id,
+            "category": form.category.data,
+            "donation_item": item_key,
+            "quantity": quantity_value,
+            "amount": round(amount_value, 2),
+            "points": points,
+            "campaign_id": int(form.campaign_id.data or 0),
+            "note": " | ".join(note_segments),
+        }
+        return redirect(url_for("main.sponsorship_checkout"))
 
     user_donations = (
         SupportDonation.query.filter_by(user_id=current_user.id)
@@ -1370,6 +1650,12 @@ def sponsorship_donations():
             user_total_trees += donation.quantity or 0
 
     user_co2_kg = user_total_trees * 21
+    if user_total_trees < 100:
+        sponsor_badge = "Green Supporter"
+    elif user_total_trees < 500:
+        sponsor_badge = "Eco Partner"
+    else:
+        sponsor_badge = "Eco Champion"
 
     return render_template(
         "sponsorship_donations.html",
@@ -1379,6 +1665,8 @@ def sponsorship_donations():
         package_options=package_options,
         category_labels=category_labels,
         donation_item_labels=donation_item_labels,
+        tree_species_default_prices=TREE_SPECIES_DEFAULT_PRICES,
+        sponsor_badge=sponsor_badge,
         campaigns=campaigns,
         totals_by_category=totals_by_category,
         total_amount=total_amount,
@@ -1389,6 +1677,76 @@ def sponsorship_donations():
         user_total_amount=user_total_amount,
         user_total_trees=user_total_trees,
         user_co2_kg=user_co2_kg,
+    )
+
+
+@main_bp.route("/sponsorship/checkout", methods=["GET", "POST"])
+@login_required
+@role_required("business", "individual")
+def sponsorship_checkout():
+    pending_payment = session.get("pending_sponsorship_payment")
+    if not pending_payment:
+        flash("No pending payment found. Please create a sponsorship first.", "warning")
+        return redirect(url_for("main.sponsorship_donations"))
+
+    if pending_payment.get("user_id") != current_user.id:
+        session.pop("pending_sponsorship_payment", None)
+        flash("Pending payment session expired. Please try again.", "warning")
+        return redirect(url_for("main.sponsorship_donations"))
+
+    payment_methods = {
+        "paypal": "PayPal",
+        "google_pay": "Google Pay",
+        "apple_pay": "Apple Pay",
+        "credit_card": "Credit Card",
+    }
+
+    if request.method == "POST":
+        payment_method = (request.form.get("payment_method") or "").strip()
+        if payment_method not in payment_methods:
+            flash("Please select a valid payment method.", "danger")
+            return render_template(
+                "sponsorship_checkout.html",
+                pending_payment=pending_payment,
+                payment_methods=payment_methods,
+            )
+
+        transaction_id = build_payment_transaction_id(
+            user_id=current_user.id,
+            payment_method=payment_method,
+            amount=float(pending_payment["amount"]),
+        )
+
+        note_segments = []
+        if pending_payment.get("note"):
+            note_segments.append(pending_payment["note"])
+        note_segments.append(
+            f"Payment completed via {payment_methods[payment_method]} (tx {transaction_id})"
+        )
+
+        donation = SupportDonation(
+            user_id=current_user.id,
+            category=pending_payment["category"],
+            donation_item=pending_payment["donation_item"],
+            quantity=int(pending_payment["quantity"]),
+            amount=float(pending_payment["amount"]),
+            points=int(pending_payment["points"]),
+            note=" | ".join(note_segments),
+        )
+        db.session.add(donation)
+        db.session.commit()
+        session.pop("pending_sponsorship_payment", None)
+
+        flash(
+            f"Payment successful ({transaction_id}). Sponsorship has been recorded.",
+            "success",
+        )
+        return redirect(url_for("main.sponsorship_donations"))
+
+    return render_template(
+        "sponsorship_checkout.html",
+        pending_payment=pending_payment,
+        payment_methods=payment_methods,
     )
 
 
@@ -1464,6 +1822,114 @@ def contact():
         return redirect(url_for("main.contact"))
 
     return render_template("contact.html", form=form)
+
+
+@main_bp.route("/merch", methods=["GET", "POST"])
+def merch_shop():
+    item_by_key = {item["key"]: item for item in MERCH_ITEMS}
+
+    available_points = None
+    if current_user.is_authenticated and current_user.role == "volunteer":
+        earned_points = _calculate_volunteer_score(current_user)[
+            "total_points"]
+        spent_points = (
+            db.session.query(db.func.sum(MerchPurchase.points_spent))
+            .filter(MerchPurchase.user_id == current_user.id)
+            .scalar()
+            or 0
+        )
+        available_points = max(0, earned_points - int(spent_points))
+
+    if request.method == "POST":
+        if not current_user.is_authenticated:
+            flash("Please log in to complete a merch purchase.", "warning")
+            return redirect(url_for("auth.login", next=url_for("main.merch_shop")))
+
+        merch_key = (request.form.get("merch_key") or "").strip()
+        payment_mode = (request.form.get("payment_mode")
+                        or "money").strip().lower()
+        quantity_raw = (request.form.get("quantity") or "1").strip()
+
+        if not quantity_raw.isdigit() or int(quantity_raw) <= 0:
+            flash("Please enter a valid quantity.", "danger")
+            return redirect(url_for("main.merch_shop"))
+
+        quantity = min(int(quantity_raw), 20)
+        item = item_by_key.get(merch_key)
+        if not item:
+            flash("Selected merch item is not available.", "danger")
+            return redirect(url_for("main.merch_shop"))
+
+        total_price = float(item["price"] * quantity)
+        total_points = int(item["points"] * quantity)
+        trees_supported = int(item["trees"] * quantity)
+
+        if payment_mode == "points":
+            if current_user.role != "volunteer":
+                flash("Only volunteers can buy merch with points.", "warning")
+                return redirect(url_for("main.merch_shop"))
+
+            volunteer_points = available_points if available_points is not None else 0
+            if volunteer_points < total_points:
+                flash(
+                    f"Not enough points. You need {total_points} points but have {volunteer_points}.",
+                    "danger",
+                )
+                return redirect(url_for("main.merch_shop"))
+
+            purchase = MerchPurchase(
+                user_id=current_user.id,
+                merch_key=item["key"],
+                merch_name=item["name"],
+                quantity=quantity,
+                payment_mode="points",
+                amount_usd=0,
+                points_spent=total_points,
+                trees_supported=trees_supported,
+                note=f"Paid with points ({total_points} pts)",
+            )
+            db.session.add(purchase)
+            db.session.commit()
+            flash(
+                f"Purchase complete: {item['name']} x{quantity} paid with {total_points} points.",
+                "success",
+            )
+            return redirect(url_for("main.merch_shop"))
+
+        purchase = MerchPurchase(
+            user_id=current_user.id,
+            merch_key=item["key"],
+            merch_name=item["name"],
+            quantity=quantity,
+            payment_mode="money",
+            amount_usd=total_price,
+            points_spent=0,
+            trees_supported=trees_supported,
+            note=f"Paid with USD (${total_price:.2f})",
+        )
+        db.session.add(purchase)
+        db.session.commit()
+        flash(
+            f"Purchase complete: {item['name']} x{quantity} for ${total_price:.2f}.",
+            "success",
+        )
+        return redirect(url_for("main.merch_shop"))
+
+    recent_purchases = []
+    if current_user.is_authenticated:
+        recent_purchases = (
+            MerchPurchase.query.filter_by(user_id=current_user.id)
+            .order_by(MerchPurchase.created_at.desc())
+            .limit(10)
+            .all()
+        )
+
+    return render_template(
+        "merch.html",
+        merch_items=MERCH_ITEMS,
+        available_points=available_points,
+        recent_purchases=recent_purchases,
+    )
 
 
 @main_bp.route("/profile")
@@ -1549,6 +2015,17 @@ def profile():
         }
         for tree in user_trees
     ]
+    tree_impact_data = _calculate_tree_impact(user_trees)
+    sponsor_donations = (
+        SupportDonation.query.filter_by(user_id=current_user.id)
+        .order_by(SupportDonation.created_at.desc())
+        .all()
+    )
+    sponsor_impact_data = _calculate_sponsorship_impact(sponsor_donations)
+    if current_user.role == "individual":
+        impact_data = _merge_impact_data(tree_impact_data, sponsor_impact_data)
+    else:
+        impact_data = tree_impact_data
     user_report_rows = [
         {
             "description": report.description,
@@ -1560,11 +2037,7 @@ def profile():
 
     business_profile = None
     if current_user.role == "business":
-        business_donations = (
-            SupportDonation.query.filter_by(user_id=current_user.id)
-            .order_by(SupportDonation.created_at.desc())
-            .all()
-        )
+        business_donations = sponsor_donations
         total_donated = sum(float(item.amount) for item in business_donations)
         trees_funded = sum(item.quantity or 0 for item in business_donations)
         points = sum(item.points or 0 for item in business_donations)
@@ -1604,6 +2077,7 @@ def profile():
             "badge": badge,
             "rank": rank,
             "points": points,
+            "impact": sponsor_impact_data,
             "history": [
                 {
                     "category": donation.category,
@@ -1629,6 +2103,7 @@ def profile():
         profile_points=profile_points,
         volunteer_rank=volunteer_rank,
         volunteer_rank_display=volunteer_rank_display,
+        impact_data=impact_data,
         business_profile=business_profile,
         delete_form=delete_form,
     )

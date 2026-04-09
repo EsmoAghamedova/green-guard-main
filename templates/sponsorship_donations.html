@@ -60,9 +60,7 @@
         <form method="POST" class="mt-4 space-y-3">
           {{ form.hidden_tag() }}
 
-          <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
-            You get: <strong>{{ 'Green Supporter' if user_total_trees < 100 else ('Eco Partner' if user_total_trees < 500 else 'Eco Champion') }}</strong> badge, public visibility, and leaderboard points.
-          </div>
+          <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">You get sponsor badge recognition, public visibility, and leaderboard points.</div>
 
           <div>
             {{ form.category.label(class='mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500') }}
@@ -74,28 +72,47 @@
 
           <div>
             {{ form.donation_item.label(class='mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500') }}
-            {{ form.donation_item(class='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm') }}
+            {{ form.donation_item(id='donation_item', class='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm') }}
             {% for error in form.donation_item.errors %}
               <p class="mt-1 text-xs text-rose-600">{{ error }}</p>
             {% endfor %}
           </div>
 
+          <div id="treeFundingFields" class="hidden grid gap-3 sm:grid-cols-2">
+            <div>
+              {{ form.tree_species.label(class='mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500') }}
+              {{ form.tree_species(id='tree_species', class='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm') }}
+              {% for error in form.tree_species.errors %}
+                <p class="mt-1 text-xs text-rose-600">{{ error }}</p>
+              {% endfor %}
+            </div>
+            <div>
+              {{ form.price_per_tree.label(class='mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500') }}
+              {{ form.price_per_tree(id='price_per_tree', class='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm', step='0.01', min='0.50', placeholder='Example: 4.50') }}
+              {% for error in form.price_per_tree.errors %}
+                <p class="mt-1 text-xs text-rose-600">{{ error }}</p>
+              {% endfor %}
+            </div>
+          </div>
+
           <div class="grid gap-3 sm:grid-cols-2">
             <div>
               {{ form.quantity.label(class='mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500') }}
-              {{ form.quantity(class='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm', min='1', placeholder='Optional if amount is entered') }}
+              {{ form.quantity(id='quantity', class='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm', min='1', placeholder='Optional if amount is entered') }}
               {% for error in form.quantity.errors %}
                 <p class="mt-1 text-xs text-rose-600">{{ error }}</p>
               {% endfor %}
             </div>
             <div>
               {{ form.amount.label(class='mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500') }}
-              {{ form.amount(class='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm', step='0.01', min='1', placeholder='Optional if trees are entered') }}
+              {{ form.amount(id='amount', class='w-full rounded-xl border border-slate-300 px-3 py-2 text-sm', step='0.01', min='1', placeholder='Optional if trees are entered') }}
               {% for error in form.amount.errors %}
                 <p class="mt-1 text-xs text-rose-600">{{ error }}</p>
               {% endfor %}
             </div>
           </div>
+
+          <p id="treeFundingHint" class="hidden rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900">Tree funding total is auto-calculated: quantity x price per tree.</p>
 
           <div>
             {{ form.campaign_id.label(class='mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500') }}
@@ -103,6 +120,26 @@
             {% for error in form.campaign_id.errors %}
               <p class="mt-1 text-xs text-rose-600">{{ error }}</p>
             {% endfor %}
+          </div>
+
+          <div class="rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50 to-white p-4 shadow-sm">
+            <div class="flex items-center justify-between gap-3">
+              <p class="text-xs font-semibold uppercase tracking-wide text-indigo-700">Checkout Step</p>
+              <span class="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700"><i class="fas fa-lock text-[10px]"></i>Secure Payment</span>
+            </div>
+            <p class="mt-2 text-xs text-indigo-900">After this step, you will choose payment method on a dedicated secure payment page.</p>
+
+            <div class="mt-4 rounded-xl border border-slate-200 bg-white p-3">
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Order Summary</p>
+              <div class="mt-2 flex items-center justify-between text-sm text-slate-700">
+                <span>Sponsorship amount</span>
+                <strong id="checkoutAmount">$0.00</strong>
+              </div>
+              <div class="mt-1 flex items-center justify-between text-xs text-slate-500">
+                <span>Estimated platform fee</span>
+                <span id="checkoutFee">$0.00</span>
+              </div>
+            </div>
           </div>
 
           <div>
@@ -115,7 +152,7 @@
 
           <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">Commission policy: each sponsorship includes a platform fee between 5% and 15%. Enter amount, trees, or both.</div>
 
-          {{ form.submit(class='w-full rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700') }}
+          {{ form.submit(id='continuePaymentButton', class='w-full rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700') }}
         </form>
       </article>
 
@@ -209,4 +246,105 @@
       {% endif %}
     </article>
   </section>
+{% endblock %}
+
+{% block extra_js %}
+  <script>
+    ;(() => {
+      const category = document.getElementById('category') || document.getElementById('{{ form.category.id }}')
+      const donationItem = document.getElementById('donation_item')
+      const treeFundingFields = document.getElementById('treeFundingFields')
+      const treeSpecies = document.getElementById('tree_species')
+      const pricePerTree = document.getElementById('price_per_tree')
+      const quantity = document.getElementById('quantity')
+      const amount = document.getElementById('amount')
+      const checkoutAmount = document.getElementById('checkoutAmount')
+      const checkoutFee = document.getElementById('checkoutFee')
+      const treeFundingHint = document.getElementById('treeFundingHint')
+      const defaultPrices = {{ tree_species_default_prices|tojson }}
+
+      if (!category || !amount || !quantity || !treeFundingFields || !treeFundingHint || !donationItem) {
+        return
+      }
+
+      const toNumber = (value) => {
+        const parsed = Number(value)
+        return Number.isFinite(parsed) ? parsed : 0
+      }
+
+      const recalcAmount = () => {
+        if (category.value !== 'plants') {
+          updateCheckoutSummary()
+          return
+        }
+
+        const q = toNumber(quantity.value)
+        const p = toNumber(pricePerTree ? pricePerTree.value : 0)
+        if (q > 0 && p > 0) {
+          amount.value = (q * p).toFixed(2)
+        }
+        updateCheckoutSummary()
+      }
+
+      const updateCheckoutSummary = () => {
+        if (!checkoutAmount || !checkoutFee || !amount) {
+          return
+        }
+
+        const total = Math.max(0, toNumber(amount.value))
+        let rate = 0.15
+        if (total < 1000) {
+          rate = 0.05
+        } else if (total < 5000) {
+          rate = 0.1
+        }
+
+        const fee = total * rate
+        checkoutAmount.textContent = `$${total.toFixed(2)}`
+        checkoutFee.textContent = `$${fee.toFixed(2)}`
+      }
+
+      const syncPlantMode = () => {
+        const isPlants = category.value === 'plants'
+        treeFundingFields.classList.toggle('hidden', !isPlants)
+        treeFundingHint.classList.toggle('hidden', !isPlants)
+
+        donationItem.closest('div').classList.toggle('hidden', isPlants)
+        amount.readOnly = isPlants
+        amount.placeholder = isPlants ? 'Auto-calculated from species price' : 'Optional if trees are entered'
+
+        if (!isPlants) {
+          updateCheckoutSummary()
+          return
+        }
+
+        if (treeSpecies && treeSpecies.value && pricePerTree && !pricePerTree.value) {
+          const defaultPrice = defaultPrices[treeSpecies.value]
+          if (defaultPrice) {
+            pricePerTree.value = Number(defaultPrice).toFixed(2)
+          }
+        }
+        recalcAmount()
+      }
+
+      category.addEventListener('change', syncPlantMode)
+      if (treeSpecies) {
+        treeSpecies.addEventListener('change', () => {
+          const defaultPrice = defaultPrices[treeSpecies.value]
+          if (defaultPrice && pricePerTree) {
+            pricePerTree.value = Number(defaultPrice).toFixed(2)
+          }
+          recalcAmount()
+        })
+      }
+      if (pricePerTree) {
+        pricePerTree.addEventListener('input', recalcAmount)
+      }
+      quantity.addEventListener('input', recalcAmount)
+      amount.addEventListener('input', updateCheckoutSummary)
+
+      syncPlantMode()
+      updateCheckoutSummary()
+    })()
+  </script>
 {% endblock %}

@@ -46,10 +46,17 @@
     <div class="min-h-screen md:flex">
       <aside class="gg-sidebar z-40 border-b border-white/20 bg-gradient-to-b from-gg-forest via-gg-moss to-emerald-500 shadow-lg md:sticky md:top-0 md:h-screen md:w-72 md:shrink-0 md:border-b-0 md:border-r">
         <div class="flex items-center justify-between px-4 py-4 sm:px-6 md:justify-start">
-          <a class="inline-flex items-center gap-2 text-white" href="{{ url_for('admin.dashboard') if current_user.is_authenticated and current_user.is_admin else url_for('main.index') }}">
-            <img src="{{ url_for('static', filename='images/green-guard-logo.png') }}" alt="Green Guard logo" class="h-10 w-10 rounded-full object-cover object-top" />
-            <strong class="text-lg tracking-wide">Green Guard</strong>
-          </a>
+          {% if current_user.is_authenticated and current_user.is_admin %}
+            <a class="inline-flex items-center gap-2 text-white" href="{{ url_for('admin.dashboard') }}">
+              <img src="{{ url_for('static', filename='images/green-guard-logo.png') }}" alt="Green Guard logo" class="h-10 w-10 rounded-full object-cover object-top" />
+              <strong class="text-lg tracking-wide">Green Guard</strong>
+            </a>
+          {% else %}
+            <a class="inline-flex items-center gap-2 text-white" href="{{ url_for('main.index') }}">
+              <img src="{{ url_for('static', filename='images/green-guard-logo.png') }}" alt="Green Guard logo" class="h-10 w-10 rounded-full object-cover object-top" />
+              <strong class="text-lg tracking-wide">Green Guard</strong>
+            </a>
+          {% endif %}
           <button id="menuToggle" class="inline-flex items-center justify-center rounded-lg border border-white/30 px-3 py-2 text-white md:hidden" type="button"><i class="fas fa-bars"></i></button>
         </div>
         <div id="menuPanel" class="hidden px-3 pb-4 md:block md:px-4 md:pb-6">
@@ -70,115 +77,162 @@
               <li>
                 <a class="gg-nav-link" href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
               </li>
-            {% elif not current_user.is_authenticated %}
-              <li>
-                <a class="gg-nav-link" href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a>
-              </li>
-              <li>
-                <a class="gg-nav-link" href="{{ url_for('main.explore') }}"><i class="fas fa-globe"></i> Explore</a>
-              </li>
-              <li>
-                <a class="gg-nav-link" href="{{ url_for('main.sponsors_page') }}"><i class="fas fa-briefcase"></i> Sponsors</a>
-              </li>
-              <li>
-                <a class="gg-nav-link" href="{{ url_for('main.leaderboard') }}"><i class="fas fa-trophy"></i> Leaderboard</a>
-              </li>
-              <li>
-                <a class="gg-nav-link" href="{{ url_for('main.contact') }}"><i class="fas fa-envelope"></i> Contact</a>
-              </li>
-            {% elif current_user.role == 'volunteer' %}
-              <li>
-                <a class="gg-nav-link" href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a>
-              </li>
-              <li>
-                <a class="gg-nav-link" href="{{ url_for('main.explore') }}"><i class="fas fa-globe"></i> Explore</a>
-              </li>
-              <li>
-                <a class="gg-nav-link" href="{{ url_for('main.create_or_report') }}"><i class="fas fa-seedling"></i> Create / Report</a>
-              </li>
-              <li>
-                <a class="gg-nav-link" href="{{ url_for('reports.view_reports') }}"><i class="fas fa-file-alt"></i> Community Reports</a>
-              </li>
-              <li>
-                <a class="gg-nav-link" href="{{ url_for('main.contact') }}"><i class="fas fa-envelope"></i> Contact</a>
-              </li>
-            {% elif current_user.role == 'business' %}
-              <li>
-                <a class="gg-nav-link" href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a>
-              </li>
-              <li>
-                <a class="gg-nav-link" href="{{ url_for('main.business_dashboard') }}"><i class="fas fa-chart-line"></i> Dashboard</a>
-              </li>
-              <li>
-                <a class="gg-nav-link" href="{{ url_for('main.explore') }}"><i class="fas fa-globe"></i> Explore</a>
-              </li>
-              <li>
-                <a class="gg-nav-link" href="{{ url_for('main.sponsorship_donations') }}"><i class="fas fa-hand-holding-dollar"></i> Sponsor (Donate)</a>
-              </li>
-              <li>
-                <a class="gg-nav-link" href="{{ url_for('main.leaderboard') }}"><i class="fas fa-trophy"></i> Leaderboard</a>
-              </li>
             {% else %}
-              <li>
-                <a class="gg-nav-link" href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a>
-              </li>
-              <li>
-                <a class="gg-nav-link" href="{{ url_for('main.explore') }}"><i class="fas fa-globe"></i> Explore</a>
-              </li>
-              <li>
-                <a class="gg-nav-link" href="{{ url_for('main.create_or_report') }}"><i class="fas fa-seedling"></i> Create / Report</a>
-              </li>
-              <li>
-                <a class="gg-nav-link" href="{{ url_for('main.sponsors_page') }}"><i class="fas fa-briefcase"></i> Sponsors</a>
-              </li>
-              <li>
-                <a class="gg-nav-link" href="{{ url_for('main.leaderboard') }}"><i class="fas fa-trophy"></i> Leaderboard</a>
-              </li>
-              <li>
-                <a class="gg-nav-link" href="{{ url_for('main.contact') }}"><i class="fas fa-envelope"></i> Contact</a>
-              </li>
-              <li>
-                <a class="gg-nav-link" href="{{ url_for('reports.view_reports') }}"><i class="fas fa-file-alt"></i> Reports</a>
-              </li>
-              {% if current_user.role == 'citizen' %}
+              {% if not current_user.is_authenticated %}
+                <li class="px-3 pt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">Main</li>
                 <li>
-                  <a class="gg-nav-link" href="{{ url_for('reports.report_cutting') }}"><i class="fas fa-triangle-exclamation"></i> Report Illegal Logging</a>
+                  <a class="gg-nav-link" href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a>
                 </li>
-              {% endif %}
-              {% if current_user.role in ['individual', 'business', 'citizen'] %}
                 <li>
-                  <a class="gg-nav-link" href="{{ url_for('main.create_or_report', mode='plant') }}"><i class="fas fa-seedling"></i> Plant Tree / Report</a>
+                  <a class="gg-nav-link" href="{{ url_for('main.explore') }}"><i class="fas fa-globe"></i> Explore</a>
                 </li>
-              {% endif %}
-              {% if current_user.role in ['individual', 'business'] %}
-                <li>
-                  <a class="gg-nav-link" href="{{ url_for('main.sponsorship_donations') }}"><i class="fas fa-hand-holding-dollar"></i> Donate Funds</a>
-                </li>
-              {% endif %}
-            {% endif %}
 
-            {% if current_user.is_authenticated and not current_user.is_admin %}
-              {% if current_user.role != 'business' %}
+                <li class="px-3 pt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">Community / Social</li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('reports.view_reports') }}"><i class="fas fa-file-alt"></i> Community Reports</a>
+                </li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('main.volunteer_leaderboard') }}"><i class="fas fa-medal"></i> Volunteer Leaderboard</a>
+                </li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('main.leaderboard') }}"><i class="fas fa-trophy"></i> Sponsor Leaderboard</a>
+                </li>
+
+                <li class="px-3 pt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">Shop / Support</li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('main.merch_shop') }}"><i class="fas fa-bag-shopping"></i> Merch Shop</a>
+                </li>
+
+                <li class="px-3 pt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">Account</li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('auth.login') }}"><i class="fas fa-sign-in-alt"></i> Login</a>
+                </li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('auth.register') }}"><i class="fas fa-user-plus"></i> Register</a>
+                </li>
+              {% elif current_user.role == 'volunteer' %}
+                <li class="px-3 pt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">Main</li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a>
+                </li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('main.explore') }}"><i class="fas fa-globe"></i> Explore</a>
+                </li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('main.create_or_report') }}"><i class="fas fa-seedling"></i> Create / Report</a>
+                </li>
+
+                <li class="px-3 pt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">Community / Social</li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('reports.view_reports') }}"><i class="fas fa-file-alt"></i> Community Reports</a>
+                </li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('main.volunteer_leaderboard') }}"><i class="fas fa-medal"></i> Volunteer Leaderboard</a>
+                </li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('main.leaderboard') }}"><i class="fas fa-trophy"></i> Sponsor Leaderboard</a>
+                </li>
+
+                <li class="px-3 pt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">Shop / Support</li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('main.merch_shop') }}"><i class="fas fa-bag-shopping"></i> Merch Shop</a>
+                </li>
+
+                <li class="px-3 pt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">Account</li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('main.profile') }}"><i class="fas fa-user-circle"></i> Profile</a>
+                </li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('auth.settings') }}"><i class="fas fa-sliders-h"></i> Settings</a>
+                </li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                </li>
+              {% elif current_user.role == 'business' %}
+                <li class="px-3 pt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">Main</li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a>
+                </li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('main.explore') }}"><i class="fas fa-globe"></i> Explore</a>
+                </li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('main.sponsorship_donations') }}"><i class="fas fa-hand-holding-dollar"></i> Sponsor / Donate</a>
+                </li>
+
+                <li class="px-3 pt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">Community / Social</li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('reports.view_reports') }}"><i class="fas fa-file-alt"></i> Community Reports</a>
+                </li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('main.leaderboard') }}"><i class="fas fa-trophy"></i> Sponsor Leaderboard</a>
+                </li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('main.volunteer_leaderboard') }}"><i class="fas fa-medal"></i> Volunteer Leaderboard</a>
+                </li>
+
+                <li class="px-3 pt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">Shop / Support</li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('main.merch_shop') }}"><i class="fas fa-bag-shopping"></i> Merch Shop</a>
+                </li>
+
+                <li class="px-3 pt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">Account</li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('main.profile') }}"><i class="fas fa-user-circle"></i> Profile</a>
+                </li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('auth.settings') }}"><i class="fas fa-sliders-h"></i> Settings</a>
+                </li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                </li>
+              {% else %}
+                <li class="px-3 pt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">Main</li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a>
+                </li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('main.explore') }}"><i class="fas fa-globe"></i> Explore</a>
+                </li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('main.create_or_report') }}"><i class="fas fa-seedling"></i> Create / Report</a>
+                </li>
                 <li>
                   <a class="gg-nav-link" href="{{ url_for('reports.plant_tree_campaign') }}"><i class="fas fa-seedling"></i> Fund Campaigns</a>
                 </li>
+
+                <li class="px-3 pt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">Community / Social</li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('reports.view_reports') }}"><i class="fas fa-file-alt"></i> Community Reports</a>
+                </li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('main.volunteer_leaderboard') }}"><i class="fas fa-medal"></i> Volunteer Leaderboard</a>
+                </li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('main.leaderboard') }}"><i class="fas fa-trophy"></i> Sponsor Leaderboard</a>
+                </li>
+
+                <li class="px-3 pt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">Shop / Support</li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('main.merch_shop') }}"><i class="fas fa-bag-shopping"></i> Merch Shop</a>
+                </li>
+                {% if current_user.role == 'individual' %}
+                  <li>
+                    <a class="gg-nav-link" href="{{ url_for('main.sponsorship_donations') }}"><i class="fas fa-hand-holding-dollar"></i> Sponsor / Donate</a>
+                  </li>
+                {% endif %}
+
+                <li class="px-3 pt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">Account</li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('main.profile') }}"><i class="fas fa-user-circle"></i> Profile</a>
+                </li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('auth.settings') }}"><i class="fas fa-sliders-h"></i> Settings</a>
+                </li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                </li>
               {% endif %}
-              <li>
-                <a class="gg-nav-link" href="{{ url_for('main.profile') }}"><i class="fas fa-user"></i> Profile</a>
-              </li>
-              <li>
-                <a class="gg-nav-link" href="{{ url_for('auth.settings') }}"><i class="fas fa-sliders-h"></i> Settings</a>
-              </li>
-              <li>
-                <a class="gg-nav-link" href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
-              </li>
-            {% elif not current_user.is_authenticated %}
-              <li>
-                <a class="gg-nav-link" href="{{ url_for('auth.login') }}"><i class="fas fa-sign-in-alt"></i> Login</a>
-              </li>
-              <li>
-                <a class="gg-nav-link" href="{{ url_for('auth.register') }}"><i class="fas fa-user-plus"></i> Register</a>
-              </li>
             {% endif %}
           </ul>
         </div>
@@ -215,6 +269,9 @@
             <div>
               <p class="mb-1 text-sm sm:text-base">
                 <strong>Green Guard</strong> community platform for tree protection and reporting.
+              </p>
+              <p class="text-xs text-emerald-100">
+                <a href="{{ url_for('main.contact') }}" class="underline-offset-2 hover:underline">Contact</a>
               </p>
               <small class="text-emerald-100">&copy; 2026 Green Guard</small>
             </div>
