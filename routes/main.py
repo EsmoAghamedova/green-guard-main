@@ -101,7 +101,7 @@ MERCH_ITEMS = [
         "price": 20,
         "points": 200,
         "trees": 2,
-        "image": "images/merch/eco-shirt.png",
+        "image": "images/products/shirt.jpeg",
     },
     {
         "key": "nature_mug",
@@ -109,7 +109,7 @@ MERCH_ITEMS = [
         "price": 12,
         "points": 120,
         "trees": 1,
-        "image": "images/merch/nature-mug.png",
+        "image": "images/products/mug.jpeg",
     },
     {
         "key": "tote_bag",
@@ -117,7 +117,7 @@ MERCH_ITEMS = [
         "price": 18,
         "points": 180,
         "trees": 2,
-        "image": "images/merch/tote-bag.png",
+        "image": "images/products/weekender-tote-bag.jpg.jpeg",
     },
     {
         "key": "eco_notebook",
@@ -125,7 +125,7 @@ MERCH_ITEMS = [
         "price": 15,
         "points": 150,
         "trees": 1,
-        "image": "images/merch/eco-notebook.png",
+        "image": "images/products/notebook.jpeg",
     },
     {
         "key": "sweatshirt",
@@ -133,7 +133,7 @@ MERCH_ITEMS = [
         "price": 10,
         "points": 100,
         "trees": 1,
-        "image": "images/merch/sweatshirt.png",
+        "image": "images/products/tshirt.jpeg",
     },
     {
         "key": "reusable_bottle",
@@ -141,7 +141,7 @@ MERCH_ITEMS = [
         "price": 25,
         "points": 250,
         "trees": 3,
-        "image": "images/merch/bottle.png",
+        "image": "images/products/slim-water-bottle.jpg.jpeg",
     },
 ]
 
@@ -729,7 +729,7 @@ def index():
         co2_display = f"{co2_kg / 1000:.2f} tonnes"
 
     return render_template(
-        "home.html",
+        "shared/home.html",
         total_trees=total_tree_count,
         total_reports=total_reports,
         total_users=total_users,
@@ -741,13 +741,18 @@ def index():
     )
 
 
+@main_bp.route("/about")
+def about():
+    return render_template("shared/about.html")
+
+
 @main_bp.route("/map")
 def map_view():
     payload = build_map_payload()
     locations = load_gfw_locations()
 
     return render_template(
-        "map.html",
+        "shared/map.html",
         trees_json=payload["trees"],
         reports_json=payload["reports"],
         locations_json=[_serialize_location(
@@ -869,7 +874,7 @@ def explore():
     ]
 
     return render_template(
-        "explore.html",
+        "shared/explore.html",
         active_tab=active_tab,
         join_form=join_form,
         campaigns=campaigns,
@@ -965,7 +970,7 @@ def create_or_report():
         if latitude is None or longitude is None:
             flash("Please provide a valid location (latitude and longitude).", "warning")
             return render_template(
-                "action.html",
+                "shared/action.html",
                 active_mode=active_mode,
                 campaign_form=campaign_form,
                 plant_form=plant_form,
@@ -991,7 +996,7 @@ def create_or_report():
         return redirect(url_for("main.explore", tab="map"))
 
     return render_template(
-        "action.html",
+        "shared/action.html",
         active_mode=active_mode,
         campaign_form=campaign_form,
         plant_form=plant_form,
@@ -1026,7 +1031,7 @@ def gfw_restoration():
 def locations_view():
     locations = load_gfw_locations()
     country_summary = _build_country_summary(locations)
-    return render_template("locations.html", locations=locations, country_summary=country_summary)
+    return render_template("shared/locations.html", locations=locations, country_summary=country_summary)
 
 
 @main_bp.route("/locations/<int:location_id>")
@@ -1034,7 +1039,7 @@ def location_detail(location_id):
     ensure_gfw_locations_current()
     location = GFWLocation.query.get_or_404(location_id)
     return render_template(
-        "location_detail.html",
+        "shared/location_detail.html",
         location=location,
         frp_display=location.frp_mw if location.frp_mw is not None else "n/a",
         last_seen_display=location.last_seen_at.strftime(
@@ -1075,7 +1080,7 @@ def leaderboard():
         item["rank"] = index
 
     return render_template(
-        "leaderboard.html",
+        "businesses/sponsors/leaderboard.html",
         leaderboard=rows,
         leaderboard_group="Sponsor Leaderboard",
     )
@@ -1291,7 +1296,7 @@ def volunteer_leaderboard():
         item["rank"] = index
 
     return render_template(
-        "volunteer_leaderboard.html",
+        "volunteers/volunteer_leaderboard.html",
         leaderboard=rows,
         leaderboard_group="Volunteer Leaderboard",
     )
@@ -1325,7 +1330,7 @@ def volunteer_dashboard():
     impact_data = _calculate_tree_impact(user_trees)
 
     return render_template(
-        "volunteer_dashboard.html",
+        "volunteers/volunteer_dashboard.html",
         score_data=score_data,
         recent_trees=recent_trees,
         recent_reports=recent_reports,
@@ -1421,7 +1426,7 @@ def business_dashboard():
     sponsor_impact_data = _calculate_sponsorship_impact(business_donations)
 
     return render_template(
-        "business_dashboard.html",
+        "businesses/sponsors/business_dashboard.html",
         funded_trees=funded_trees,
         donation_trees=donation_trees,
         total_trees_supported=total_trees_supported,
@@ -1462,7 +1467,7 @@ def business_certificate():
     co2_reduction_kg = total_trees_supported * 21
 
     return render_template(
-        "business_certificate.html",
+        "businesses/sponsors/business_certificate.html",
         total_trees_supported=total_trees_supported,
         total_contribution_usd=total_contribution_usd,
         co2_reduction_kg=co2_reduction_kg,
@@ -1658,7 +1663,7 @@ def sponsorship_donations():
         sponsor_badge = "Eco Champion"
 
     return render_template(
-        "sponsorship_donations.html",
+        "businesses/sponsors/sponsorship_donations.html",
         form=form,
         user_donations=user_donations,
         top_businesses=top_businesses,
@@ -1706,7 +1711,7 @@ def sponsorship_checkout():
         if payment_method not in payment_methods:
             flash("Please select a valid payment method.", "danger")
             return render_template(
-                "sponsorship_checkout.html",
+                "businesses/sponsors/sponsorship_checkout.html",
                 pending_payment=pending_payment,
                 payment_methods=payment_methods,
             )
@@ -1744,7 +1749,7 @@ def sponsorship_checkout():
         return redirect(url_for("main.sponsorship_donations"))
 
     return render_template(
-        "sponsorship_checkout.html",
+        "businesses/sponsors/sponsorship_checkout.html",
         pending_payment=pending_payment,
         payment_methods=payment_methods,
     )
@@ -1780,7 +1785,7 @@ def sponsors_page():
     )
 
     return render_template(
-        "sponsors.html",
+        "businesses/sponsors/sponsors.html",
         sponsor_showcase=sponsor_showcase[:12],
     )
 
@@ -1821,7 +1826,7 @@ def contact():
         flash("Thank you for contacting Green Guard. We received your message.", "success")
         return redirect(url_for("main.contact"))
 
-    return render_template("contact.html", form=form)
+    return render_template("shared/contact.html", form=form)
 
 
 @main_bp.route("/merch", methods=["GET", "POST"])
@@ -1925,7 +1930,7 @@ def merch_shop():
         )
 
     return render_template(
-        "merch.html",
+        "shared/merch.html",
         merch_items=MERCH_ITEMS,
         available_points=available_points,
         recent_purchases=recent_purchases,
@@ -2091,7 +2096,7 @@ def profile():
 
     delete_form = DeleteForm()
     return render_template(
-        "profile.html",
+        "shared/profile.html",
         user_trees=user_trees,
         user_reports=user_reports,
         created_campaigns=created_campaigns,

@@ -59,7 +59,7 @@ def plant_tree():
         latitude, longitude = parse_form_coordinates(form)
         if latitude is None or longitude is None:
             flash("Please provide a valid location (latitude and longitude).", "warning")
-            return render_template("plant_tree.html", form=form)
+            return render_template("volunteers/plant_tree.html", form=form)
 
         image_filename = save_uploaded_image(form.image)
 
@@ -78,7 +78,7 @@ def plant_tree():
         flash("Tree planting record submitted successfully.", "success")
         return redirect(url_for("main.index"))
 
-    return render_template("plant_tree.html", form=form)
+    return render_template("volunteers/plant_tree.html", form=form)
 
 
 @reports_bp.route("/plant/campaign", methods=["GET", "POST"])
@@ -115,7 +115,7 @@ def plant_tree_campaign():
         latitude, longitude = parse_form_coordinates(form)
         if latitude is None or longitude is None:
             flash("Please provide a valid location (latitude and longitude).", "warning")
-            return render_template("plant_tree_campaign.html", form=form)
+            return render_template("volunteers/plant_tree_campaign.html", form=form)
 
         image_filename = save_uploaded_image(form.image)
 
@@ -135,7 +135,7 @@ def plant_tree_campaign():
         flash("Campaign planting uploaded. It now appears on the map.", "success")
         return redirect(url_for("main.explore", tab="map"))
 
-    return render_template("plant_tree_campaign.html", form=form)
+    return render_template("volunteers/plant_tree_campaign.html", form=form)
 
 
 @reports_bp.route("/report", methods=["GET", "POST"])
@@ -146,7 +146,7 @@ def report_cutting():
         latitude, longitude = parse_form_coordinates(form)
         if latitude is None or longitude is None:
             flash("Please provide a valid location (latitude and longitude).", "warning")
-            return render_template("report_cutting.html", form=form)
+            return render_template("volunteers/report_cutting.html", form=form)
 
         image_filename = save_uploaded_image(form.image)
 
@@ -163,41 +163,41 @@ def report_cutting():
         flash("Report submitted and queued for verification. It will appear on the map after review.", "success")
         return redirect(url_for("reports.cutting_gallery"))
 
-    return render_template("report_cutting.html", form=form)
+    return render_template("volunteers/report_cutting.html", form=form)
 
 
 @reports_bp.route("/reports")
 def view_reports():
     report_count = CuttingReport.query.count()
     tree_count = TreeRecord.query.count()
-    return render_template("reports.html", report_count=report_count, tree_count=tree_count)
+    return render_template("shared/reports.html", report_count=report_count, tree_count=tree_count)
 
 
 @reports_bp.route("/reports/cutting")
 def cutting_gallery():
     reports = CuttingReport.query.order_by(
         CuttingReport.created_at.desc()).all()
-    return render_template("cutting_gallery.html", reports=reports)
+    return render_template("volunteers/cutting_gallery.html", reports=reports)
 
 
 @reports_bp.route("/reports/cutting/<int:report_id>")
 def cutting_detail(report_id):
     report = CuttingReport.query.get_or_404(report_id)
     delete_form = DeleteForm()
-    return render_template("cutting_detail.html", report=report, delete_form=delete_form)
+    return render_template("volunteers/cutting_detail.html", report=report, delete_form=delete_form)
 
 
 @reports_bp.route("/reports/trees")
 def trees_gallery():
     trees = TreeRecord.query.order_by(TreeRecord.created_at.desc()).all()
-    return render_template("trees_gallery.html", trees=trees)
+    return render_template("volunteers/trees_gallery.html", trees=trees)
 
 
 @reports_bp.route("/reports/trees/<int:tree_id>")
 def tree_detail(tree_id):
     tree = TreeRecord.query.get_or_404(tree_id)
     delete_form = DeleteForm()
-    return render_template("tree_detail.html", tree=tree, delete_form=delete_form)
+    return render_template("volunteers/tree_detail.html", tree=tree, delete_form=delete_form)
 
 
 @reports_bp.route("/reports/cutting/<int:report_id>/edit", methods=["GET", "POST"])
@@ -211,7 +211,7 @@ def edit_cutting_report(report_id):
         latitude, longitude = parse_form_coordinates(form)
         if latitude is None or longitude is None:
             flash("Please provide a valid location (latitude and longitude).", "warning")
-            return render_template("edit_cutting_report.html", form=form, report=report)
+            return render_template("volunteers/edit_cutting_report.html", form=form, report=report)
 
         old_image = report.image_filename
         new_image = save_uploaded_image(form.image)
@@ -230,7 +230,7 @@ def edit_cutting_report(report_id):
         flash("Cutting report updated.", "success")
         return redirect(url_for("reports.cutting_detail", report_id=report.id))
 
-    return render_template("edit_cutting_report.html", form=form, report=report)
+    return render_template("volunteers/edit_cutting_report.html", form=form, report=report)
 
 
 @reports_bp.route("/reports/cutting/<int:report_id>/delete", methods=["POST"])
@@ -262,7 +262,7 @@ def edit_tree_record(tree_id):
         latitude, longitude = parse_form_coordinates(form)
         if latitude is None or longitude is None:
             flash("Please provide a valid location (latitude and longitude).", "warning")
-            return render_template("edit_tree_record.html", form=form, tree=tree)
+            return render_template("volunteers/edit_tree_record.html", form=form, tree=tree)
 
         old_image = tree.image_filename
         new_image = save_uploaded_image(form.image)
@@ -282,7 +282,7 @@ def edit_tree_record(tree_id):
         flash("Tree record updated.", "success")
         return redirect(url_for("reports.tree_detail", tree_id=tree.id))
 
-    return render_template("edit_tree_record.html", form=form, tree=tree)
+    return render_template("volunteers/edit_tree_record.html", form=form, tree=tree)
 
 
 @reports_bp.route("/reports/trees/<int:tree_id>/delete", methods=["POST"])

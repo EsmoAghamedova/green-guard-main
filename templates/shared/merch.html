@@ -20,9 +20,9 @@
     <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {% for item in merch_items %}
         <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <div class="mb-3 flex h-44 items-center justify-center overflow-hidden rounded-xl bg-emerald-50">
-            <img src="{{ url_for('static', filename=item.image) }}" alt="{{ item.name }}" class="h-full w-full object-contain" onerror="this.style.display='none'" />
-            <span class="text-sm text-emerald-700">Image coming soon</span>
+          <div class="mb-3 flex h-44 items-center justify-center overflow-hidden rounded-xl bg-white">
+            <img src="{{ url_for('static', filename=item.image) }}" alt="{{ item.name }}" class="h-full w-full object-contain" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden')" />
+            <span class="hidden text-sm text-emerald-700">Image coming soon</span>
           </div>
           <h2 class="text-lg font-semibold text-slate-900">{{ item.name }}</h2>
           <p class="mt-2 text-sm font-semibold text-emerald-700">${{ item.price }}</p>

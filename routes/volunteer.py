@@ -127,7 +127,7 @@ def campaigns_explore():
     signup_map = {signup.campaign_id: signup for signup in signups}
 
     return render_template(
-        "explore_campaigns.html",
+        "volunteers/explore_campaigns.html",
         campaigns=campaigns_data,
         participant_counts=participant_counts,
         signup_map=signup_map,
@@ -176,6 +176,6 @@ def campaigns_create():
         return redirect(url_for("volunteer.campaigns_explore"))
 
     return render_template(
-        "create_campaign.html",
+        "volunteers/create_campaign.html",
         create_form=create_form,
     )

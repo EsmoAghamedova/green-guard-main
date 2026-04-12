@@ -48,12 +48,12 @@
         <div class="flex items-center justify-between px-4 py-4 sm:px-6 md:justify-start">
           {% if current_user.is_authenticated and current_user.is_admin %}
             <a class="inline-flex items-center gap-2 text-white" href="{{ url_for('admin.dashboard') }}">
-              <img src="{{ url_for('static', filename='images/green-guard-logo.png') }}" alt="Green Guard logo" class="h-10 w-10 rounded-full object-cover object-top" />
+              <img src="{{ url_for('static', filename='images/green-guard-logo.png') }}" alt="Green Guard logo" class="h-10 w-auto object-contain" />
               <strong class="text-lg tracking-wide">Green Guard</strong>
             </a>
           {% else %}
             <a class="inline-flex items-center gap-2 text-white" href="{{ url_for('main.index') }}">
-              <img src="{{ url_for('static', filename='images/green-guard-logo.png') }}" alt="Green Guard logo" class="h-10 w-10 rounded-full object-cover object-top" />
+              <img src="{{ url_for('static', filename='images/green-guard-logo.png') }}" alt="Green Guard logo" class="h-10 w-auto object-contain" />
               <strong class="text-lg tracking-wide">Green Guard</strong>
             </a>
           {% endif %}
@@ -67,6 +67,9 @@
               </li>
               <li>
                 <a class="gg-nav-link" href="{{ url_for('admin.money') }}"><i class="fas fa-chart-pie"></i> Finance</a>
+              </li>
+              <li>
+                <a class="gg-nav-link" href="{{ url_for('main.about') }}"><i class="fas fa-circle-info"></i> About Us</a>
               </li>
               <li>
                 <a class="gg-nav-link" href="{{ url_for('main.profile') }}"><i class="fas fa-user"></i> Profile</a>
@@ -85,6 +88,9 @@
                 </li>
                 <li>
                   <a class="gg-nav-link" href="{{ url_for('main.explore') }}"><i class="fas fa-globe"></i> Explore</a>
+                </li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('main.about') }}"><i class="fas fa-circle-info"></i> About Us</a>
                 </li>
 
                 <li class="px-3 pt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">Community / Social</li>
@@ -117,6 +123,9 @@
                 </li>
                 <li>
                   <a class="gg-nav-link" href="{{ url_for('main.explore') }}"><i class="fas fa-globe"></i> Explore</a>
+                </li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('main.about') }}"><i class="fas fa-circle-info"></i> About Us</a>
                 </li>
                 <li>
                   <a class="gg-nav-link" href="{{ url_for('main.create_or_report') }}"><i class="fas fa-seedling"></i> Create / Report</a>
@@ -157,6 +166,9 @@
                   <a class="gg-nav-link" href="{{ url_for('main.explore') }}"><i class="fas fa-globe"></i> Explore</a>
                 </li>
                 <li>
+                  <a class="gg-nav-link" href="{{ url_for('main.about') }}"><i class="fas fa-circle-info"></i> About Us</a>
+                </li>
+                <li>
                   <a class="gg-nav-link" href="{{ url_for('main.sponsorship_donations') }}"><i class="fas fa-hand-holding-dollar"></i> Sponsor / Donate</a>
                 </li>
 
@@ -193,6 +205,9 @@
                 </li>
                 <li>
                   <a class="gg-nav-link" href="{{ url_for('main.explore') }}"><i class="fas fa-globe"></i> Explore</a>
+                </li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('main.about') }}"><i class="fas fa-circle-info"></i> About Us</a>
                 </li>
                 <li>
                   <a class="gg-nav-link" href="{{ url_for('main.create_or_report') }}"><i class="fas fa-seedling"></i> Create / Report</a>
@@ -239,9 +254,9 @@
       </aside>
 
       <div class="flex min-h-screen flex-1 flex-col">
-        <div class="mx-auto mt-6 w-full max-w-6xl px-4 sm:px-6">
-          {% with messages=get_flashed_messages(with_categories=true) %}
-            {% if messages %}
+        {% with messages=get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="mx-auto mt-6 w-full max-w-6xl px-4 sm:px-6">
               {% for category, message in messages %}
                 {% if category == 'success' %}
                   {% set flash_style = 'border-emerald-300 bg-emerald-50 text-emerald-800' %}
@@ -254,9 +269,9 @@
                 {% endif %}
                 <div class="mb-3 rounded-2xl border px-4 py-3 shadow-sm {{ flash_style }}" role="alert">{{ message }}</div>
               {% endfor %}
-            {% endif %}
-          {% endwith %}
-        </div>
+            </div>
+          {% endif %}
+        {% endwith %}
 
         <main class="gg-main flex-1">
           {% block content %}
