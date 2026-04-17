@@ -12,7 +12,6 @@ ROLE_CHOICES = [
     ("individual", "Individual Sponsor"),
     ("business", "Business / Company"),
     ("volunteer", "Volunteer"),
-    ("citizen", "Citizen Reporter"),
 ]
 
 DONATION_CATEGORY_CHOICES = [
@@ -166,7 +165,7 @@ class CampaignPlantTreeForm(FlaskForm):
         "Joined Campaign", coerce=int, validators=[InputRequired()])
     species = StringField("Tree Species", validators=[
                           InputRequired(), Length(min=2, max=120)])
-    quantity = IntegerField("Trees Planted", validators=[
+    quantity = IntegerField("Trees You Will Plant", validators=[
                             InputRequired(), NumberRange(min=1, max=1000)])
     location_search = StringField("Search Location (street, city, or landmark)", validators=[
                                   Length(max=255)])
@@ -207,6 +206,9 @@ class CuttingReportForm(FlaskForm):
     location_text = StringField("Location", validators=[Length(max=255)])
     image = FileField("Image", validators=[FileAllowed(
         ["jpg", "jpeg", "png"], "Only JPG/JPEG/PNG files are allowed.")])
+    is_anonymous = BooleanField(
+        "Submit this report anonymously (hide my username in public views)."
+    )
     privacy_confirm = BooleanField(
         "I confirm this image does not show identifiable faces, children, license plates, or private home details.",
         validators=[DataRequired(
@@ -252,6 +254,9 @@ class CuttingReportEditForm(FlaskForm):
     location_text = StringField("Location", validators=[Length(max=255)])
     image = FileField("Replace Image", validators=[FileAllowed(
         ["jpg", "jpeg", "png"], "Only JPG/JPEG/PNG files are allowed.")])
+    is_anonymous = BooleanField(
+        "Show this report as anonymous in public views."
+    )
     privacy_confirm = BooleanField(
         "If replacing image: I confirm it does not show identifiable faces, children, license plates, or private home details.")
     submit = SubmitField("Save Changes")

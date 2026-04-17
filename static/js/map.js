@@ -6,6 +6,7 @@
     const gpsButton = document.getElementById("gps-locate-btn");
     const gpsStatus = document.getElementById("gps-status");
     const gfwStatus = document.getElementById("gfw-status");
+    const nearestZoneStatus = document.getElementById("nearest-zone-status");
 
     const apiMapDataUrl = "/api/map-data";
     const apiGfwLocationsUrl = "/api/gfw-locations";
@@ -28,6 +29,16 @@
         gfwStatus.textContent = message;
         gfwStatus.classList.remove("text-muted", "text-danger", "text-success");
         gfwStatus.classList.add(isError ? "text-danger" : "text-success");
+    }
+
+    function setNearestZoneStatus(message, isError) {
+        if (!nearestZoneStatus) {
+            return;
+        }
+
+        nearestZoneStatus.textContent = message;
+        nearestZoneStatus.classList.remove("text-muted", "text-danger", "text-success");
+        nearestZoneStatus.classList.add(isError ? "text-danger" : "text-success");
     }
 
     function parseJsonScript(id) {
@@ -80,6 +91,7 @@
     let bounds = L.latLngBounds([]);
     let userMarker = null;
     let accuracyCircle = null;
+    let restorationMarkers = [];
     const treeLayer = L.layerGroup().addTo(map);
     const reportLayer = L.layerGroup().addTo(map);
     const restorationLayer = L.layerGroup().addTo(map);
@@ -143,9 +155,11 @@
 
     function addRestorationMarkers(locations) {
         restorationLayer.clearLayers();
+        restorationMarkers = [];
 
         if (!Array.isArray(locations) || locations.length === 0) {
             setGfwStatus("No deforestation zones available right now.", false);
+            setNearestZoneStatus("Nearest deforestation zone is unavailable.", true);
             return;
         }
 
@@ -166,6 +180,13 @@
                 fillOpacity: 0.8
             }).addTo(restorationLayer);
 
+            restorationMarkers.push({
+                marker,
+                latLng: L.latLng(latitude, longitude),
+                name: location.name || "Deforestation Zone",
+                country: location.country_name || location.region_label || "Unknown",
+            });
+
             bounds.extend([latitude, longitude]);
 
             marker.bindPopup(
@@ -178,6 +199,44 @@
         });
 
         setGfwStatus(`Showing ${locations.length} deforestation zone${locations.length === 1 ? "" : "s"}.`, false);
+        setNearestZoneStatus("Use GPS to find the nearest deforestation zone.", false);
+    }
+
+    function describeDistance(meters) {
+        if (meters < 1000) {
+            return `${Math.round(meters)} m`;
+        }
+
+        return `${(meters / 1000).toFixed(2)} km`;
+    }
+
+    function highlightNearestZone(userLatLng) {
+        if (!restorationMarkers.length) {
+            setNearestZoneStatus("No deforestation zones available near you right now.", true);
+            return;
+        }
+
+        let nearest = null;
+        let nearestDistanceMeters = Number.POSITIVE_INFINITY;
+
+        restorationMarkers.forEach((item) => {
+            const distanceMeters = map.distance(userLatLng, item.latLng);
+            if (distanceMeters < nearestDistanceMeters) {
+                nearestDistanceMeters = distanceMeters;
+                nearest = item;
+            }
+        });
+
+        if (!nearest) {
+            setNearestZoneStatus("No deforestation zones available near you right now.", true);
+            return;
+        }
+
+        nearest.marker.openPopup();
+        setNearestZoneStatus(
+            `Nearest zone: ${nearest.name} (${nearest.country}) at about ${describeDistance(nearestDistanceMeters)}.`,
+            false
+        );
     }
 
     function updateBoundsView() {
@@ -229,9 +288,18 @@
             }
 
             const payload = await response.json();
-            addRestorationMarkers(Array.isArray(payload.locations) ? payload.locations : []);
+            const apiLocations = Array.isArray(payload.locations) ? payload.locations : [];
+            const fallbackLocations = parseJsonScript("locations-data");
+            const locationsToRender = apiLocations.length > 0 ? apiLocations : fallbackLocations;
+            addRestorationMarkers(locationsToRender);
         } catch (error) {
-            setGfwStatus("Unable to load deforestation zones from API right now.", true);
+            const fallbackLocations = parseJsonScript("locations-data");
+            if (Array.isArray(fallbackLocations) && fallbackLocations.length > 0) {
+                addRestorationMarkers(fallbackLocations);
+                setGfwStatus("Showing cached deforestation zones.", false);
+            } else {
+                setGfwStatus("Unable to load deforestation zones from API right now.", true);
+            }
         }
     }
 
@@ -269,6 +337,7 @@
 
         map.flyTo(userLatLng, 15, { duration: 1.0 });
         setGpsStatus("GPS location found. Map centered on your position.", false);
+        highlightNearestZone(userLatLng);
     }
 
     function handleGpsError(error) {

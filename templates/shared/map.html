@@ -35,6 +35,10 @@
               </div>
               <small id="gfw-status" class="map-status text-muted">Loading global deforestation zones...</small>
             </div>
+            <div class="mb-3">
+              <small id="nearest-zone-status" class="d-block text-muted">Use GPS to find the nearest deforestation zone.</small>
+              <small id="gps-status" class="d-block text-muted mt-1">GPS not used yet.</small>
+            </div>
             <div id="map" class="gg-map"></div>
           </div>
         </div>
@@ -73,6 +77,13 @@
     {
       {
         reports_json | tojson
+      }
+    }
+  </script>
+  <script id="locations-data" type="application/json">
+    {
+      {
+        locations_json | tojson
       }
     }
   </script>

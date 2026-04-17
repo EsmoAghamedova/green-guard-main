@@ -219,9 +219,14 @@
               {% for signup in joined_campaign_rows %}
                 <div class="rounded-xl border border-slate-200 p-3">
                   <p class="text-sm font-semibold text-slate-900">{{ signup.title }}</p>
+                  <p class="text-xs text-slate-600">Start date: {{ signup.event_date_text }}</p>
                   <p class="text-xs text-slate-600">Status: {{ signup.status|title }}</p>
-                  {% if signup.campaign_id %}
-                    <a href="{{ url_for('reports.plant_tree_campaign', campaign_id=signup.campaign_id) }}" class="mt-2 inline-block text-xs font-semibold text-emerald-700 hover:text-emerald-900">Add planted trees to this campaign</a>
+                  {% if signup.campaign_id and signup.status == 'approved' and signup.has_started %}
+                    <a href="{{ url_for('reports.plant_tree_campaign', campaign_id=signup.campaign_id) }}" class="mt-2 inline-block text-xs font-semibold text-emerald-700 hover:text-emerald-900">Add trees you will plant to this campaign</a>
+                  {% elif signup.status == 'approved' and not signup.has_started %}
+                    <p class="mt-2 text-xs text-amber-700">Tree upload opens when campaign status becomes Ongoing.</p>
+                  {% elif signup.status == 'pending' %}
+                    <p class="mt-2 text-xs text-amber-700">Waiting for campaign owner/admin verification.</p>
                   {% endif %}
                 </div>
               {% endfor %}
@@ -256,6 +261,7 @@
               {% for report in user_report_rows %}
                 <div class="rounded-xl border border-slate-200 p-3">
                   <p class="text-sm font-semibold text-slate-900">{{ report.description }}</p>
+                  <p class="text-xs text-slate-600">Visibility: {{ 'Anonymous' if report.is_anonymous else 'Tagged with your username' }}</p>
                   <p class="text-xs text-slate-600">Status: {{ report.status|title }} | {{ report.created_at_text }}</p>
                 </div>
               {% endfor %}

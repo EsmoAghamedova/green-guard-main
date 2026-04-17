@@ -56,15 +56,16 @@ def create_app() -> Flask:
         if not current_user.is_authenticated or not current_user.is_admin:
             return None
 
+        endpoint = request.endpoint
+        if endpoint and endpoint.startswith("admin."):
+            return None
+
         allowed_endpoints = {
-            "admin.dashboard",
-            "admin.money",
             "main.profile",
             "auth.settings",
             "auth.logout",
             "static",
         }
-        endpoint = request.endpoint
         if endpoint in allowed_endpoints:
             return None
 
@@ -82,6 +83,7 @@ def create_app() -> Flask:
         ensure_support_donation_schema_columns(app)
         ensure_campaign_schema_columns(app)
         ensure_tree_record_schema_columns(app)
+        ensure_cutting_report_schema_columns(app)
         ensure_admin_user(User)
 
     if not app.debug or os.environ.get("WERKZEUG_RUN_MAIN") == "true":
@@ -135,6 +137,11 @@ def ensure_user_schema_columns(app: Flask) -> None:
             )
             app.logger.info(
                 "Added missing user column: %s", column_name)
+
+        # Citizen role has been removed. Normalize existing accounts to volunteer.
+        connection.exec_driver_sql(
+            "UPDATE user SET role = 'volunteer' WHERE role = 'citizen'"
+        )
 
 
 def ensure_gfw_schema_columns(app: Flask) -> None:
@@ -218,7 +225,6 @@ def ensure_campaign_schema_columns(app: Flask) -> None:
 
 
 def ensure_tree_record_schema_columns(app: Flask) -> None:
-    # Keep backward compatibility for existing SQLite databases without migrations.
     required_columns = {
         "campaign_id": "INTEGER",
     }
@@ -240,6 +246,33 @@ def ensure_tree_record_schema_columns(app: Flask) -> None:
             )
             app.logger.info(
                 "Added missing tree_record column: %s", column_name)
+
+
+def ensure_cutting_report_schema_columns(app: Flask) -> None:
+    required_columns = {
+        "is_anonymous": "INTEGER DEFAULT 0",
+    }
+
+    with db.engine.begin() as connection:
+        existing_rows = connection.exec_driver_sql(
+            "PRAGMA table_info(cutting_report)"
+        ).fetchall()
+        if not existing_rows:
+            return
+
+        existing_columns = {row[1] for row in existing_rows}
+        for column_name, column_type in required_columns.items():
+            if column_name in existing_columns:
+                continue
+
+            connection.exec_driver_sql(
+                f"ALTER TABLE cutting_report ADD COLUMN {column_name} {column_type}"
+            )
+            connection.exec_driver_sql(
+                "UPDATE cutting_report SET is_anonymous = 0 WHERE is_anonymous IS NULL"
+            )
+            app.logger.info(
+                "Added missing cutting_report column: %s", column_name)
 
 
 @login_manager.user_loader

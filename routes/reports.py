@@ -1,12 +1,13 @@
 import os
 import uuid
+from datetime import datetime
 
 from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 from werkzeug.utils import secure_filename
 
 from extensions import db
-from forms import CampaignPlantTreeForm, CuttingReportEditForm, CuttingReportForm, DeleteForm, PlantTreeForm, TreeRecordEditForm
+from forms import CampaignPlantTreeForm, CuttingReportEditForm, CuttingReportForm, DeleteForm, TreeRecordEditForm
 from models import Campaign, CuttingReport, TreeRecord, VolunteerCampaignSignup
 reports_bp = Blueprint("reports", __name__)
 
@@ -54,31 +55,8 @@ def parse_form_coordinates(form) -> tuple[float | None, float | None]:
 @reports_bp.route("/plant", methods=["GET", "POST"])
 @login_required
 def plant_tree():
-    form = PlantTreeForm()
-    if form.validate_on_submit():
-        latitude, longitude = parse_form_coordinates(form)
-        if latitude is None or longitude is None:
-            flash("Please provide a valid location (latitude and longitude).", "warning")
-            return render_template("volunteers/plant_tree.html", form=form)
-
-        image_filename = save_uploaded_image(form.image)
-
-        record = TreeRecord(
-            species=form.species.data.strip(),
-            quantity=form.quantity.data,
-            latitude=latitude,
-            longitude=longitude,
-            location_notes=form.location_notes.data.strip(
-            ) if form.location_notes.data else None,
-            image_filename=image_filename,
-            user_id=current_user.id,
-        )
-        db.session.add(record)
-        db.session.commit()
-        flash("Tree planting record submitted successfully.", "success")
-        return redirect(url_for("main.index"))
-
-    return render_template("volunteers/plant_tree.html", form=form)
+    flash("Tree submissions now require a joined and approved campaign.", "info")
+    return redirect(url_for("reports.plant_tree_campaign"))
 
 
 @reports_bp.route("/plant/campaign", methods=["GET", "POST"])
@@ -87,17 +65,22 @@ def plant_tree_campaign():
     form = CampaignPlantTreeForm()
 
     joined_signups = VolunteerCampaignSignup.query.filter_by(
-        user_id=current_user.id
+        user_id=current_user.id,
+        status="approved",
     ).all()
     joined_campaign_ids = [signup.campaign_id for signup in joined_signups]
     joined_campaigns = Campaign.query.filter(
         Campaign.id.in_(joined_campaign_ids)
     ).order_by(Campaign.event_date.asc()).all() if joined_campaign_ids else []
 
+    ongoing_campaigns = [
+        campaign for campaign in joined_campaigns if campaign.status == "ongoing"
+    ]
+
     form.campaign_id.choices = [
         (campaign.id,
          f"{campaign.title} ({campaign.event_date.strftime('%Y-%m-%d')})")
-        for campaign in joined_campaigns
+        for campaign in ongoing_campaigns
     ]
 
     requested_campaign_id = request.args.get("campaign_id", "").strip()
@@ -106,9 +89,16 @@ def plant_tree_campaign():
         valid_campaign_ids = {choice[0] for choice in form.campaign_id.choices}
         if requested_campaign_id_int in valid_campaign_ids:
             form.campaign_id.data = requested_campaign_id_int
+        elif any(campaign.id == requested_campaign_id_int for campaign in joined_campaigns):
+            flash("You can add trees only while this campaign is ongoing.", "warning")
 
     if not form.campaign_id.choices:
-        flash("Join a campaign first, then submit planted trees.", "warning")
+        if joined_campaigns:
+            flash(
+                "You joined campaigns, but tree upload is available only for ongoing campaigns.", "warning")
+        else:
+            flash(
+                "Your campaign join request must be approved before submitting planted trees.", "warning")
         return redirect(url_for("main.explore", tab="campaigns"))
 
     if form.validate_on_submit():
@@ -156,6 +146,7 @@ def report_cutting():
             longitude=longitude,
             location_text=form.location_text.data.strip() if form.location_text.data else None,
             image_filename=image_filename,
+            is_anonymous=bool(form.is_anonymous.data),
             user_id=current_user.id,
         )
         db.session.add(report)
@@ -221,6 +212,7 @@ def edit_cutting_report(report_id):
         report.longitude = longitude
         report.location_text = form.location_text.data.strip(
         ) if form.location_text.data else None
+        report.is_anonymous = bool(form.is_anonymous.data)
 
         if new_image:
             report.image_filename = new_image

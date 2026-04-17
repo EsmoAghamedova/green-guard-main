@@ -32,7 +32,7 @@
         </p>
         <p class="mb-3">{{ report.description }}</p>
         <p class="mb-1 text-muted">
-          <strong>Submitted by:</strong> {{ report.user.username }}
+          <strong>Submitted by:</strong> {{ 'Anonymous' if report.is_anonymous else report.user.username }}
         </p>
         <p class="mb-1 text-muted">
           <strong>Date:</strong> {{ report.created_at.strftime('%Y-%m-%d %H:%M') }}

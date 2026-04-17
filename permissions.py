@@ -8,8 +8,9 @@ ROLE_HOME = {
     "individual": "main.sponsorship_donations",
     "business": "main.business_dashboard",
     "volunteer": "main.volunteer_dashboard",
-    "citizen": "main.profile",
 }
+
+CAMPAIGN_CREATOR_ROLES = {"business"}
 
 
 def redirect_for_role(role: str):

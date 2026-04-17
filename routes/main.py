@@ -15,9 +15,9 @@ from flask import Blueprint, current_app, flash, jsonify, redirect, render_templ
 from flask_login import current_user, login_required
 
 from extensions import db
-from forms import ContactForm, DeleteForm, PlantTreeForm, SupportDonationForm, TREE_SPECIES_DEFAULT_PRICES, VolunteerCampaignCreateForm, VolunteerCampaignJoinForm
+from forms import ContactForm, DeleteForm, SupportDonationForm, TREE_SPECIES_DEFAULT_PRICES, VolunteerCampaignCreateForm, VolunteerCampaignJoinForm
 from models import Campaign, CuttingReport, GFWLocation, GFWLocationSyncState, MerchPurchase, SupportDonation, TreeRecord, User, VolunteerCampaignSignup
-from permissions import redirect_for_role, role_required
+from permissions import CAMPAIGN_CREATOR_ROLES, redirect_for_role, role_required
 
 main_bp = Blueprint("main", __name__)
 
@@ -25,6 +25,7 @@ GFW_FIRE_ALERTS_URL = "https://data-api.globalforestwatch.org/dataset/nasa_viirs
 COUNTRY_CENTROIDS_CSV_URL = "https://raw.githubusercontent.com/gavinr/world-countries-centroids/master/dist/countries.csv"
 GFW_SYNC_STATE_NAME = "gfw_fire_alerts"
 DEFAULT_GFW_SYNC_TIME = "06:00"
+DEFAULT_GFW_SYNC_INTERVAL_DAYS = 7
 DEFAULT_GFW_MAX_COUNTRIES = 20
 DEFAULT_GFW_GLOBAL_ZOOM = 3
 DEFAULT_GFW_MAX_GRID_POINTS = 24
@@ -188,18 +189,16 @@ def _parse_sync_time(sync_time_text: str) -> time_obj:
 
 def _get_sync_cutoff(now: datetime | None = None) -> datetime:
     current_time = now or datetime.utcnow()
-    sync_time = _parse_sync_time(
-        current_app.config.get("GFW_DAILY_SYNC_TIME", DEFAULT_GFW_SYNC_TIME)
+    interval_days = int(current_app.config.get(
+        "GFW_SYNC_INTERVAL_DAYS", DEFAULT_GFW_SYNC_INTERVAL_DAYS)
     )
-    return datetime.combine(current_time.date(), sync_time)
+    interval_days = max(1, interval_days)
+    return current_time - timedelta(days=interval_days)
 
 
 def _is_gfw_sync_due(last_synced_at: datetime | None, now: datetime | None = None) -> bool:
     current_time = now or datetime.utcnow()
     cutoff = _get_sync_cutoff(current_time)
-    if current_time < cutoff:
-        return False
-
     return last_synced_at is None or last_synced_at < cutoff
 
 
@@ -411,6 +410,41 @@ def _serialize_location(location: GFWLocation) -> dict:
     }
 
 
+def _build_fallback_location_payload() -> list[dict]:
+    # Fallback markers keep deforestation zones visible when API sync has not populated DB yet.
+    fallback_locations = []
+    for index, point in enumerate(GFW_GLOBAL_HOTSPOT_SYNC_POINTS, start=1):
+        fallback_locations.append(
+            {
+                "id": -index,
+                "name": f"{point['country_name']} Deforestation Zone",
+                "region_label": point["country_name"],
+                "country_code": point.get("country_code") or "UNK",
+                "country_name": point["country_name"],
+                "latitude": point["lat"],
+                "longitude": point["lng"],
+                "alert_date": "Fallback",
+                "alert_time_utc": None,
+                "confidence": "n/a",
+                "frp_mw": None,
+                "reforestation_type": None,
+                "is_reforestation": False,
+                "description": "Fallback deforestation marker while live API data is syncing.",
+                "source": "fallback_hotspot",
+                "last_seen_at": None,
+                "last_seen_label": "Fallback data",
+                "detail_url": None,
+            }
+        )
+    return fallback_locations
+
+
+def _get_map_locations_payload() -> list[dict]:
+    locations = load_gfw_locations()
+    serialized = [_serialize_location(location) for location in locations]
+    return serialized if serialized else _build_fallback_location_payload()
+
+
 def calculate_donation_points(category: str, quantity: int, amount: float) -> int:
     # Weighted scoring: plants get highest eco impact, tools next, travel support still rewarded.
     quantity_multipliers = {
@@ -497,6 +531,11 @@ def sync_gfw_locations(force: bool = False) -> dict:
     created_count = 0
     updated_count = 0
     fetched_any_alerts = False
+    sync_had_errors = False
+    retention_cutoff = now - timedelta(days=max(1, int(
+        current_app.config.get("GFW_SYNC_INTERVAL_DAYS",
+                               DEFAULT_GFW_SYNC_INTERVAL_DAYS)
+    )))
 
     for sync_point in _load_worldwide_sync_points():
         sync_point_changed = False
@@ -511,6 +550,7 @@ def sync_gfw_locations(force: bool = False) -> dict:
                 sync_point.get("country_code"),
                 error,
             )
+            sync_had_errors = True
             continue
 
         fetched_any_alerts = True
@@ -593,6 +633,14 @@ def sync_gfw_locations(force: bool = False) -> dict:
 
     if fetched_any_alerts:
         state.last_synced_at = now
+
+        if not sync_had_errors:
+            stale_locations = GFWLocation.query.filter(
+                GFWLocation.last_seen_at < retention_cutoff
+            ).all()
+            for location in stale_locations:
+                db.session.delete(location)
+
         db.session.commit()
     else:
         db.session.rollback()
@@ -668,6 +716,20 @@ def index():
     total_users = User.query.filter(User.is_admin.is_(False)).count()
     total_donations = sum(float(item.amount)
                           for item in SupportDonation.query.all())
+    participant_user_ids = set()
+    participant_user_ids.update(
+        user_id for (user_id,) in TreeRecord.query.with_entities(TreeRecord.user_id).all() if user_id
+    )
+    participant_user_ids.update(
+        user_id for (user_id,) in CuttingReport.query.with_entities(CuttingReport.user_id).all() if user_id
+    )
+    participant_user_ids.update(
+        user_id for (user_id,) in SupportDonation.query.with_entities(SupportDonation.user_id).all() if user_id
+    )
+    participant_user_ids.update(
+        user_id for (user_id,) in VolunteerCampaignSignup.query.with_entities(VolunteerCampaignSignup.user_id).all() if user_id
+    )
+    participant_count = len(participant_user_ids)
 
     volunteer_users = User.query.filter(
         User.is_admin.is_(False),
@@ -733,6 +795,7 @@ def index():
         total_trees=total_tree_count,
         total_reports=total_reports,
         total_users=total_users,
+        participant_count=participant_count,
         total_donations=total_donations,
         co2_display=co2_display,
         top_volunteers=top_volunteers,
@@ -749,26 +812,63 @@ def about():
 @main_bp.route("/map")
 def map_view():
     payload = build_map_payload()
-    locations = load_gfw_locations()
+    locations_json = _get_map_locations_payload()
 
     return render_template(
         "shared/map.html",
         trees_json=payload["trees"],
         reports_json=payload["reports"],
-        locations_json=[_serialize_location(
-            location) for location in locations],
+        locations_json=locations_json,
     )
 
 
 @main_bp.route("/explore", methods=["GET", "POST"])
-@login_required
 def explore():
     active_tab = request.args.get("tab", "campaigns").strip().lower()
-    if active_tab not in {"campaigns", "map", "locations"}:
+    if active_tab not in {"campaigns", "map"}:
         active_tab = "campaigns"
 
     join_form = VolunteerCampaignJoinForm()
     if request.method == "POST":
+        action = (request.form.get("action") or "join").strip().lower()
+
+        if action == "review":
+            if not current_user.is_authenticated:
+                flash("Please log in to manage campaign join requests.", "warning")
+                return redirect(url_for("auth.login", next=url_for("main.explore", tab="campaigns")))
+
+            campaign_id_raw = request.form.get("campaign_id")
+            signup_id_raw = request.form.get("signup_id")
+            decision = (request.form.get("decision") or "").strip().lower()
+
+            if not (campaign_id_raw and signup_id_raw and campaign_id_raw.isdigit() and signup_id_raw.isdigit()):
+                flash("Invalid join request action.", "warning")
+                return redirect(url_for("main.explore", tab="campaigns"))
+
+            campaign = Campaign.query.get_or_404(int(campaign_id_raw))
+            if not (current_user.is_admin or campaign.creator_user_id == current_user.id):
+                flash(
+                    "Only campaign owners or admins can verify join requests.", "warning")
+                return redirect(url_for("main.explore", tab="campaigns"))
+
+            signup = VolunteerCampaignSignup.query.filter_by(
+                id=int(signup_id_raw),
+                campaign_id=campaign.id,
+            ).first_or_404()
+
+            if decision not in {"approved", "rejected"}:
+                flash("Invalid decision.", "warning")
+                return redirect(url_for("main.explore", tab="campaigns"))
+
+            signup.status = decision
+            db.session.commit()
+            flash(f"Join request marked as {decision}.", "success")
+            return redirect(url_for("main.explore", tab="campaigns"))
+
+        if not current_user.is_authenticated:
+            flash("Please log in to join campaigns.", "warning")
+            return redirect(url_for("auth.login", next=url_for("main.explore", tab="campaigns")))
+
         campaign_id_raw = request.form.get(
             "campaign_id") or request.form.get("join-campaign_id")
         motivation_raw = request.form.get(
@@ -793,7 +893,7 @@ def explore():
                 db.session.add(signup)
                 db.session.commit()
                 flash(
-                    "Campaign joined successfully. It is now visible in your profile.", "success")
+                    "Join request sent. Wait for campaign owner/admin verification.", "success")
         else:
             flash("Could not join campaign from cached form. Please reload Explore and click Join again.", "warning")
 
@@ -809,14 +909,55 @@ def explore():
         urgency_filter = "all"
 
     campaigns = Campaign.query.order_by(Campaign.event_date.asc()).all()
-    participant_counts = {
-        campaign.id: VolunteerCampaignSignup.query.filter_by(
-            campaign_id=campaign.id).count()
+    planted_trees_by_campaign = {
+        campaign.id: int(
+            db.session.query(db.func.coalesce(
+                db.func.sum(TreeRecord.quantity), 0))
+            .filter(TreeRecord.campaign_id == campaign.id)
+            .scalar()
+            or 0
+        )
         for campaign in campaigns
     }
-    user_signups = VolunteerCampaignSignup.query.filter_by(
-        user_id=current_user.id).all()
+    participant_counts = {
+        campaign.id: VolunteerCampaignSignup.query.filter_by(
+            campaign_id=campaign.id,
+            status="approved",
+        ).count()
+        for campaign in campaigns
+    }
+    user_signups = []
+    if current_user.is_authenticated:
+        user_signups = VolunteerCampaignSignup.query.filter_by(
+            user_id=current_user.id).all()
     signup_map = {signup.campaign_id: signup for signup in user_signups}
+
+    pending_requests_by_campaign = {}
+    if current_user.is_authenticated:
+        manageable_campaign_ids = {
+            campaign.id
+            for campaign in campaigns
+            if current_user.is_admin or campaign.creator_user_id == current_user.id
+        }
+        if manageable_campaign_ids:
+            pending_signups = (
+                VolunteerCampaignSignup.query.filter(
+                    VolunteerCampaignSignup.campaign_id.in_(
+                        manageable_campaign_ids),
+                    VolunteerCampaignSignup.status == "pending",
+                )
+                .order_by(VolunteerCampaignSignup.created_at.asc())
+                .all()
+            )
+
+            for signup in pending_signups:
+                pending_requests_by_campaign.setdefault(signup.campaign_id, []).append(
+                    {
+                        "id": signup.id,
+                        "username": signup.user.username,
+                        "motivation": signup.motivation,
+                    }
+                )
 
     recent_trees = (
         TreeRecord.query.order_by(TreeRecord.created_at.desc())
@@ -841,6 +982,21 @@ def explore():
             "urgency": "high" if campaign.event_date <= datetime.utcnow() + timedelta(days=7) else ("medium" if campaign.event_date <= datetime.utcnow() + timedelta(days=21) else "low"),
             "participants": participant_counts.get(campaign.id, 0),
             "is_joined": campaign.id in signup_map,
+            "join_status": signup_map[campaign.id].status if campaign.id in signup_map else None,
+            "can_manage_requests": current_user.is_authenticated and (current_user.is_admin or campaign.creator_user_id == current_user.id),
+            "pending_requests": pending_requests_by_campaign.get(campaign.id, []),
+            "has_started": campaign.status == "ongoing",
+            "planted_trees": planted_trees_by_campaign.get(campaign.id, 0),
+            "progress_percent": min(
+                100,
+                int(
+                    (
+                        (planted_trees_by_campaign.get(campaign.id, 0)
+                         / max(campaign.target_trees, 1))
+                        * 100
+                    )
+                ),
+            ),
         }
         for campaign in campaigns
     ]
@@ -867,7 +1023,7 @@ def explore():
     ]
     recent_report_rows = [
         {
-            "username": report.user.username,
+            "username": "Anonymous" if report.is_anonymous else report.user.username,
             "description": report.description,
         }
         for report in recent_reports
@@ -883,8 +1039,7 @@ def explore():
         signup_map=signup_map,
         trees_json=payload["trees"],
         reports_json=payload["reports"],
-        locations_json=[_serialize_location(
-            location) for location in locations],
+        locations_json=_get_map_locations_payload(),
         locations=locations,
         country_summary=country_summary,
         recent_trees=recent_trees,
@@ -916,7 +1071,7 @@ def join_campaign(campaign_id: int):
         )
         db.session.add(signup)
         db.session.commit()
-        flash("Campaign joined successfully. It is now visible in your profile.", "success")
+        flash("Join request sent. Wait for campaign owner/admin verification.", "success")
 
     return redirect(url_for("main.explore", tab="campaigns"))
 
@@ -924,14 +1079,18 @@ def join_campaign(campaign_id: int):
 @main_bp.route("/action", methods=["GET", "POST"])
 @login_required
 def create_or_report():
-    active_mode = request.args.get("mode", "campaign").strip().lower()
-    if active_mode not in {"campaign", "plant"}:
-        active_mode = "campaign"
+    can_create_campaign = current_user.is_authenticated and (
+        current_user.is_admin or current_user.role in CAMPAIGN_CREATOR_ROLES
+    )
 
     campaign_form = VolunteerCampaignCreateForm(prefix="campaign")
-    plant_form = PlantTreeForm(prefix="plant")
 
     if campaign_form.submit.data and campaign_form.validate_on_submit():
+        if not can_create_campaign:
+            flash(
+                "Campaign creation is available for business sponsors and admins only.", "warning")
+            return redirect(url_for("main.create_or_report"))
+
         try:
             event_date = datetime.strptime(
                 campaign_form.event_date.data.strip(), "%Y-%m-%d")
@@ -963,43 +1122,10 @@ def create_or_report():
         flash("Campaign created and added to your profile.", "success")
         return redirect(url_for("main.profile"))
 
-    if plant_form.submit.data and plant_form.validate_on_submit():
-        from routes.reports import parse_form_coordinates, save_uploaded_image
-
-        latitude, longitude = parse_form_coordinates(plant_form)
-        if latitude is None or longitude is None:
-            flash("Please provide a valid location (latitude and longitude).", "warning")
-            return render_template(
-                "shared/action.html",
-                active_mode=active_mode,
-                campaign_form=campaign_form,
-                plant_form=plant_form,
-            )
-
-        image_filename = None
-        if plant_form.image.data:
-            image_filename = save_uploaded_image(plant_form.image)
-
-        record = TreeRecord(
-            species=plant_form.species.data.strip(),
-            quantity=plant_form.quantity.data,
-            latitude=latitude,
-            longitude=longitude,
-            location_notes=plant_form.location_notes.data.strip(
-            ) if plant_form.location_notes.data else None,
-            image_filename=image_filename,
-            user_id=current_user.id,
-        )
-        db.session.add(record)
-        db.session.commit()
-        flash("Planting proof submitted. Added to map and leaderboard points.", "success")
-        return redirect(url_for("main.explore", tab="map"))
-
     return render_template(
         "shared/action.html",
-        active_mode=active_mode,
         campaign_form=campaign_form,
-        plant_form=plant_form,
+        can_create_campaign=can_create_campaign,
     )
 
 
@@ -1011,11 +1137,17 @@ def map_data():
 @main_bp.route("/api/gfw-locations")
 def gfw_locations_api():
     locations = load_gfw_locations()
-    country_summary = _build_country_summary(locations)
+    serialized_locations = [_serialize_location(
+        location) for location in locations]
+    if serialized_locations:
+        country_summary = _build_country_summary(locations)
+    else:
+        serialized_locations = _build_fallback_location_payload()
+        country_summary = []
     return jsonify(
         {
-            "locations": [_serialize_location(location) for location in locations],
-            "count": len(locations),
+            "locations": serialized_locations,
+            "count": len(serialized_locations),
             "countries": country_summary,
             "synced_at": _get_sync_state().last_synced_at.isoformat() if _get_sync_state().last_synced_at else None,
         }
@@ -1048,25 +1180,19 @@ def location_detail(location_id):
     )
 
 
-@main_bp.route("/leaderboard")
-def leaderboard():
-    sponsors = User.query.filter(
+def _build_sponsor_leaderboard_rows() -> list[dict]:
+    sponsor_users = User.query.filter(
         User.is_admin.is_(False),
         User.role.in_(["business", "individual"]),
     ).all()
 
     rows = []
-    for user in sponsors:
-        donations = SupportDonation.query.filter_by(user_id=user.id).all()
-
-        total_amount = sum(float(donation.amount) for donation in donations)
-
-        rows.append(
-            {
-                "user": user,
-                "total_amount": total_amount,
-            }
+    for user in sponsor_users:
+        total_amount = sum(
+            float(donation.amount)
+            for donation in SupportDonation.query.filter_by(user_id=user.id).all()
         )
+        rows.append({"user": user, "total_amount": total_amount})
 
     rows.sort(
         key=lambda item: (
@@ -1079,10 +1205,51 @@ def leaderboard():
     for index, item in enumerate(rows, start=1):
         item["rank"] = index
 
+    return rows
+
+
+def _build_volunteer_leaderboard_rows() -> list[dict]:
+    volunteer_users = User.query.filter(
+        User.is_admin.is_(False),
+        User.role.in_(["volunteer", "individual"]),
+    ).all()
+
+    rows = []
+    for user in volunteer_users:
+        score_data = _calculate_volunteer_score(user)
+        rows.append(
+            {
+                "user": user,
+                "tree_count": score_data["tree_count"],
+                "report_count": score_data["report_count"],
+                "campaigns_created": score_data["campaigns_created"],
+                "total_points": score_data["total_points"],
+            }
+        )
+
+    rows.sort(
+        key=lambda item: (
+            item["total_points"],
+            item["tree_count"],
+            item["report_count"],
+            item["campaigns_created"],
+            item["user"].username.lower(),
+        ),
+        reverse=True,
+    )
+
+    for index, item in enumerate(rows, start=1):
+        item["rank"] = index
+
+    return rows
+
+
+@main_bp.route("/leaderboard")
+def leaderboard():
     return render_template(
-        "businesses/sponsors/leaderboard.html",
-        leaderboard=rows,
-        leaderboard_group="Sponsor Leaderboard",
+        "shared/leaderboards.html",
+        sponsor_leaderboard=_build_sponsor_leaderboard_rows(),
+        volunteer_leaderboard=_build_volunteer_leaderboard_rows(),
     )
 
 
@@ -1263,43 +1430,7 @@ def _merge_impact_data(primary: dict, secondary: dict) -> dict:
 
 @main_bp.route("/leaderboard/volunteers")
 def volunteer_leaderboard():
-    volunteer_users = User.query.filter(
-        User.is_admin.is_(False),
-        User.role.in_(["volunteer", "citizen", "individual"]),
-    ).all()
-
-    rows = []
-    for user in volunteer_users:
-        score_data = _calculate_volunteer_score(user)
-        rows.append(
-            {
-                "user": user,
-                "tree_count": score_data["tree_count"],
-                "report_count": score_data["report_count"],
-                "campaigns_created": score_data["campaigns_created"],
-                "total_points": score_data["total_points"],
-            }
-        )
-
-    rows.sort(
-        key=lambda item: (
-            item["total_points"],
-            item["tree_count"],
-            item["report_count"],
-            item["campaigns_created"],
-            item["user"].username.lower(),
-        ),
-        reverse=True,
-    )
-
-    for index, item in enumerate(rows, start=1):
-        item["rank"] = index
-
-    return render_template(
-        "volunteers/volunteer_leaderboard.html",
-        leaderboard=rows,
-        leaderboard_group="Volunteer Leaderboard",
-    )
+    return redirect(url_for("main.leaderboard") + "#volunteers")
 
 
 @main_bp.route("/volunteer/dashboard")
@@ -1416,7 +1547,7 @@ def business_dashboard():
         TreeRecord.query.join(User)
         .filter(
             User.is_admin.is_(False),
-            User.role.in_(["volunteer", "citizen", "individual"]),
+            User.role.in_(["volunteer", "individual"]),
             TreeRecord.image_filename.isnot(None),
         )
         .order_by(TreeRecord.created_at.desc())
@@ -1964,7 +2095,7 @@ def profile():
     volunteer_rows = []
     volunteer_users = User.query.filter(
         User.is_admin.is_(False),
-        User.role.in_(["volunteer", "citizen", "individual"]),
+        User.role.in_(["volunteer", "individual"]),
     ).all()
     for user in volunteer_users:
         score_data = _calculate_volunteer_score(user)
@@ -2009,6 +2140,8 @@ def profile():
             "campaign_id": signup.campaign_id,
             "title": signup.campaign.title,
             "status": signup.status,
+            "event_date_text": signup.campaign.event_date.strftime("%Y-%m-%d"),
+            "has_started": signup.campaign.status == "ongoing",
         }
         for signup in joined_campaigns
     ]
@@ -2035,6 +2168,7 @@ def profile():
         {
             "description": report.description,
             "status": report.status,
+            "is_anonymous": report.is_anonymous,
             "created_at_text": report.created_at.strftime("%Y-%m-%d %H:%M"),
         }
         for report in user_reports

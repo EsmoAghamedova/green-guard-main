@@ -81,6 +81,14 @@
               </div>
 
               <div class="form-group form-check gg-field-full gg-report-check">
+                {{ form.is_anonymous(class='form-check-input') }}
+                {{ form.is_anonymous.label(class='form-check-label') }}
+                {% for error in form.is_anonymous.errors %}
+                  <small class="text-danger d-block">{{ error }}</small>
+                {% endfor %}
+              </div>
+
+              <div class="form-group form-check gg-field-full gg-report-check">
                 {{ form.privacy_confirm(class='form-check-input') }}
                 {{ form.privacy_confirm.label(class='form-check-label') }}
                 {% for error in form.privacy_confirm.errors %}

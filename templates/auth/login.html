@@ -16,7 +16,7 @@
 
               <div class="form-group">
                 {{ form.email.label }}
-                {{ form.email(class='form-control') }}
+                {{ form.email(class='form-control', autocomplete='username', autocapitalize='off', spellcheck='false') }}
                 {% for error in form.email.errors %}
                   <small class="text-danger d-block">{{ error }}</small>
                 {% endfor %}
@@ -24,17 +24,40 @@
 
               <div class="form-group">
                 {{ form.password.label }}
-                {{ form.password(class='form-control') }}
+                {{ form.password(class='form-control', id='login-password', autocomplete='current-password') }}
                 {% for error in form.password.errors %}
                   <small class="text-danger d-block">{{ error }}</small>
                 {% endfor %}
               </div>
 
+              <div class="form-group form-check">
+                <input type="checkbox" class="form-check-input" id="login-show-password" />
+                <label class="form-check-label" for="login-show-password">Show password</label>
+              </div>
+
               {{ form.submit(class='btn btn-success btn-block') }}
             </form>
+
+            <p class="mt-3 mb-0 text-center text-muted">
+              Don't have an account?
+              <a href="{{ url_for('auth.register') }}" class="font-weight-bold text-success">Register here</a>.
+            </p>
           </div>
         </div>
       </div>
     </div>
   </div>
+{% endblock %}
+
+{% block extra_js %}
+  <script>
+    const loginPasswordInput = document.getElementById('login-password')
+    const loginShowPassword = document.getElementById('login-show-password')
+    
+    if (loginPasswordInput && loginShowPassword) {
+      loginShowPassword.addEventListener('change', () => {
+        loginPasswordInput.type = loginShowPassword.checked ? 'text' : 'password'
+      })
+    }
+  </script>
 {% endblock %}

@@ -5,7 +5,7 @@ from flask import Blueprint, abort, flash, redirect, render_template, request, u
 from flask_login import current_user, login_required
 
 from extensions import db
-from models import Campaign, CuttingReport, SupportDonation, TreeRecord, User
+from models import Campaign, CuttingReport, SupportDonation, TreeRecord, User, VolunteerCampaignSignup
 
 admin_bp = Blueprint("admin", __name__)
 
@@ -32,6 +32,11 @@ def dashboard():
     reports = CuttingReport.query.order_by(
         CuttingReport.created_at.desc()).all()
     campaigns = Campaign.query.order_by(Campaign.event_date.desc()).all()
+    pending_signups = (
+        VolunteerCampaignSignup.query.filter_by(status="pending")
+        .order_by(VolunteerCampaignSignup.created_at.desc())
+        .all()
+    )
     sponsor_donations = SupportDonation.query.order_by(
         SupportDonation.created_at.desc()).all()
 
@@ -62,6 +67,7 @@ def dashboard():
         tree_records=tree_records,
         reports=reports,
         campaigns=campaigns,
+        pending_signups=pending_signups,
         campaign_rows=campaign_rows,
         sponsor_donations=sponsor_donations,
         sponsor_totals=sponsor_totals,
@@ -110,6 +116,24 @@ def update_campaign_status(campaign_id):
     campaign.status = new_status
     db.session.commit()
     flash("Campaign status updated.", "success")
+    return redirect(url_for("admin.dashboard"))
+
+
+@admin_bp.route("/admin/campaign-signup/<int:signup_id>/status", methods=["POST"])
+@login_required
+@admin_required
+def update_campaign_signup_status(signup_id):
+    signup = VolunteerCampaignSignup.query.get_or_404(signup_id)
+    new_status = request.form.get("status", "pending").strip().lower()
+    valid_statuses = {"pending", "approved", "rejected"}
+
+    if new_status not in valid_statuses:
+        flash("Invalid volunteer verification status.", "danger")
+        return redirect(url_for("admin.dashboard"))
+
+    signup.status = new_status
+    db.session.commit()
+    flash("Volunteer campaign verification updated.", "success")
     return redirect(url_for("admin.dashboard"))
 
 

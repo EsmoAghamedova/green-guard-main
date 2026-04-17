@@ -75,7 +75,12 @@
             {% for report in reports %}
               <tr>
                 <td>{{ report.id }}</td>
-                <td>{{ report.user.username }}</td>
+                <td>
+                  {{ report.user.username }}
+                  {% if report.is_anonymous %}
+                    <span class="badge badge-light border ml-1">Anonymous Public</span>
+                  {% endif %}
+                </td>
                 <td>
                   {{ report.description[:80] }}{% if report.description|length > 80 %}...{% endif %}
                 </td>
@@ -181,6 +186,55 @@
             {% else %}
               <tr>
                 <td colspan="6" class="text-center text-muted">No campaigns found.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mt-4">
+      <div class="card-header bg-warning text-dark">Volunteer Campaign Verification</div>
+      <div class="card-body table-responsive">
+        <table class="table table-bordered table-sm mb-0">
+          <thead>
+            <tr>
+              <th>Signup ID</th>
+              <th>Volunteer</th>
+              <th>Campaign</th>
+              <th>Current Status</th>
+              <th>Requested At</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for signup in pending_signups %}
+              <tr>
+                <td>{{ signup.id }}</td>
+                <td>{{ signup.user.username }}</td>
+                <td>{{ signup.campaign.title }}</td>
+                <td>
+                  <span class="badge badge-secondary text-uppercase">{{ signup.status }}</span>
+                </td>
+                <td>{{ signup.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>
+                  <form method="POST" action="{{ url_for('admin.update_campaign_signup_status', signup_id=signup.id) }}" class="form-inline">
+                    <select name="status" class="form-control form-control-sm mr-2">
+                      {% for status in ['approved', 'rejected', 'pending'] %}
+                        {% if status == signup.status %}
+                          <option value="{{ status }}" selected>{{ status|title }}</option>
+                        {% else %}
+                          <option value="{{ status }}">{{ status|title }}</option>
+                        {% endif %}
+                      {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                  </form>
+                </td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="6" class="text-center text-muted">No pending volunteer verifications.</td>
               </tr>
             {% endfor %}
           </tbody>

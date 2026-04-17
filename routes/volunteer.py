@@ -4,7 +4,7 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from extensions import db
-from forms import VolunteerCampaignCreateForm, VolunteerCampaignJoinForm
+from forms import VolunteerCampaignJoinForm
 from models import Campaign, VolunteerCampaignSignup
 
 volunteer_bp = Blueprint("volunteer", __name__)
@@ -79,7 +79,7 @@ def campaigns_explore():
         )
         db.session.add(signup)
         db.session.commit()
-        flash("Campaign joined successfully.", "success")
+        flash("Join request sent. Wait for campaign owner/admin verification.", "success")
         return redirect(url_for("volunteer.campaigns_explore"))
 
     location_filter = request.args.get("location", "").strip()
@@ -108,7 +108,9 @@ def campaigns_explore():
 
     participant_counts = {
         campaign.id: VolunteerCampaignSignup.query.filter_by(
-            campaign_id=campaign.id).count()
+            campaign_id=campaign.id,
+            status="approved",
+        ).count()
         for campaign in campaigns_data
     }
 
@@ -141,41 +143,5 @@ def campaigns_explore():
 @volunteer_bp.route("/campaigns/create", methods=["GET", "POST"])
 @login_required
 def campaigns_create():
-    ensure_default_campaigns()
-    create_form = VolunteerCampaignCreateForm(prefix="create")
-
-    if create_form.validate_on_submit():
-        try:
-            event_date = datetime.strptime(
-                create_form.event_date.data.strip(), "%Y-%m-%d")
-        except ValueError:
-            flash("Use date format YYYY-MM-DD.", "warning")
-            return redirect(url_for("volunteer.campaigns_create"))
-
-        campaign = Campaign(
-            title=create_form.title.data.strip(),
-            location=create_form.location.data.strip(),
-            description=create_form.description.data.strip(),
-            event_date=event_date,
-            target_trees=create_form.target_trees.data,
-            status="open",
-            creator_user_id=current_user.id,
-        )
-        db.session.add(campaign)
-        db.session.flush()
-
-        creator_signup = VolunteerCampaignSignup(
-            user_id=current_user.id,
-            campaign_id=campaign.id,
-            motivation="Campaign creator",
-            status="approved",
-        )
-        db.session.add(creator_signup)
-        db.session.commit()
-        flash("Campaign created and added to your profile.", "success")
-        return redirect(url_for("volunteer.campaigns_explore"))
-
-    return render_template(
-        "volunteers/create_campaign.html",
-        create_form=create_form,
-    )
+    flash("Campaign creation from volunteer pages has been removed.", "warning")
+    return redirect(url_for("main.create_or_report", mode="campaign"))

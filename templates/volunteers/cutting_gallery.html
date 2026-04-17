@@ -33,7 +33,7 @@
                 <p class="mb-2">
                   {{ report.description[:110] }}{% if report.description|length > 110 %}...{% endif %}
                 </p>
-                <p class="mb-1 small text-muted">By {{ report.user.username }}</p>
+                <p class="mb-1 small text-muted">By {{ 'Anonymous' if report.is_anonymous else report.user.username }}</p>
                 <p class="mb-0 small text-muted">{{ report.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
                 <a href="{{ url_for('reports.cutting_detail', report_id=report.id) }}" class="stretched-link" aria-label="Open report details"></a>
               </div>

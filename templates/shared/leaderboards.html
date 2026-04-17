@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Leaderboards | Green Guard
+{% endblock %}
+
+{% block content %}
+  <section class="mx-auto mt-8 w-full max-w-6xl px-4 sm:px-6">
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+      <p class="text-sm font-bold uppercase tracking-wider text-emerald-700">Leaderboards</p>
+      <h1 class="mt-2 text-3xl font-extrabold text-slate-950 sm:text-4xl">One place to compare volunteer and sponsor impact.</h1>
+      <p class="mt-3 max-w-3xl text-sm leading-6 text-slate-600">This page combines both rankings so visitors can see the people planting trees and the sponsors funding the work without switching screens.</p>
+
+      <div class="mt-5 flex flex-wrap gap-2">
+        <button type="button" class="leaderboard-switch rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700" data-board-target="sponsors">Sponsors</button>
+        <button type="button" class="leaderboard-switch rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100" data-board-target="volunteers">Volunteers</button>
+      </div>
+    </div>
+
+    <div id="sponsors" class="leaderboard-panel mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm" data-board-panel="sponsors">
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p class="text-sm font-bold uppercase tracking-wider text-emerald-700">Sponsor Leaderboard</p>
+          <h2 class="mt-1 text-2xl font-bold text-slate-950">Ranked by total donations</h2>
+        </div>
+        <p class="text-sm text-slate-600">Businesses and individuals are ordered by total donated amount.</p>
+      </div>
+
+      {% if sponsor_leaderboard %}
+        <div class="mt-5 overflow-x-auto rounded-2xl border border-slate-200">
+          <table class="min-w-full divide-y divide-slate-200 text-sm">
+            <thead class="bg-slate-50">
+              <tr>
+                <th class="px-3 py-2 text-left font-semibold text-slate-700">Rank</th>
+                <th class="px-3 py-2 text-left font-semibold text-slate-700">Sponsor</th>
+                <th class="px-3 py-2 text-left font-semibold text-slate-700">Role</th>
+                <th class="px-3 py-2 text-left font-semibold text-slate-700">Total Donated</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 bg-white">
+              {% for entry in sponsor_leaderboard %}
+                <tr>
+                  <td class="px-3 py-2 font-semibold text-slate-900">#{{ entry.rank }}</td>
+                  <td class="px-3 py-2 font-semibold text-slate-900">{{ entry.user.username }}</td>
+                  <td class="px-3 py-2 text-slate-600">{{ entry.user.role|replace('_', ' ')|title }}</td>
+                  <td class="px-3 py-2 font-semibold text-emerald-700">${{ '%.2f'|format(entry.total_amount) }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">No sponsor donations recorded yet.</div>
+      {% endif %}
+    </div>
+
+    <div id="volunteers" class="leaderboard-panel mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm" data-board-panel="volunteers" hidden>
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p class="text-sm font-bold uppercase tracking-wider text-emerald-700">Volunteer Leaderboard</p>
+          <h2 class="mt-1 text-2xl font-bold text-slate-950">Ranked by trees, reports, and campaigns</h2>
+        </div>
+        <p class="text-sm text-slate-600">Points combine tree planting, reports, and campaign creation.</p>
+      </div>
+
+      {% if volunteer_leaderboard %}
+        <div class="mt-5 overflow-x-auto rounded-2xl border border-slate-200">
+          <table class="min-w-full divide-y divide-slate-200 text-sm">
+            <thead class="bg-slate-50">
+              <tr>
+                <th class="px-3 py-2 text-left font-semibold text-slate-700">Rank</th>
+                <th class="px-3 py-2 text-left font-semibold text-slate-700">Volunteer</th>
+                <th class="px-3 py-2 text-left font-semibold text-slate-700">Trees Planted</th>
+                <th class="px-3 py-2 text-left font-semibold text-slate-700">Reports</th>
+                <th class="px-3 py-2 text-left font-semibold text-slate-700">Campaigns Created</th>
+                <th class="px-3 py-2 text-left font-semibold text-slate-700">Total Points</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 bg-white">
+              {% for entry in volunteer_leaderboard %}
+                <tr>
+                  <td class="px-3 py-2 font-semibold text-slate-900">#{{ entry.rank }}</td>
+                  <td class="px-3 py-2 font-semibold text-slate-900">{{ entry.user.username }}</td>
+                  <td class="px-3 py-2 text-slate-600">{{ entry.tree_count }}</td>
+                  <td class="px-3 py-2 text-slate-600">{{ entry.report_count }}</td>
+                  <td class="px-3 py-2 text-slate-600">{{ entry.campaigns_created }}</td>
+                  <td class="px-3 py-2 font-semibold text-emerald-700">{{ entry.total_points }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">No volunteer activity recorded yet.</div>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}
+
+{% block extra_js %}
+  <script>
+    const boardButtons = document.querySelectorAll('[data-board-target]')
+    const boardPanels = document.querySelectorAll('[data-board-panel]')
+    
+    const setActiveBoard = (targetBoard) => {
+      boardPanels.forEach((panel) => {
+        panel.hidden = panel.dataset.boardPanel !== targetBoard
+      })
+    
+      boardButtons.forEach((button) => {
+        const isActive = button.dataset.boardTarget === targetBoard
+        button.classList.toggle('bg-slate-900', isActive)
+        button.classList.toggle('text-white', isActive)
+        button.classList.toggle('border-slate-300', !isActive)
+        button.classList.toggle('text-slate-700', !isActive)
+        button.classList.toggle('border-transparent', isActive)
+        button.classList.toggle('bg-white', !isActive)
+      })
+    }
+    
+    const initialBoard = window.location.hash === '#volunteers' ? 'volunteers' : 'sponsors'
+    setActiveBoard(initialBoard)
+    
+    boardButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const targetBoard = button.dataset.boardTarget
+        history.replaceState(null, '', `#${targetBoard}`)
+        setActiveBoard(targetBoard)
+      })
+    })
+  </script>
+{% endblock %}

@@ -58,6 +58,7 @@ class CuttingReport(db.Model):
     longitude = db.Column(db.Float, nullable=False)
     location_text = db.Column(db.String(255))
     image_filename = db.Column(db.String(255))
+    is_anonymous = db.Column(db.Boolean, default=False, nullable=False)
     status = db.Column(db.String(30), default="pending", nullable=False)
     created_at = db.Column(
         db.DateTime, default=datetime.utcnow, nullable=False)

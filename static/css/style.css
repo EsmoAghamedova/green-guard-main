@@ -16,6 +16,12 @@ body {
     color: var(--gg-text);
 }
 
+img,
+video {
+    max-width: 100%;
+    height: auto;
+}
+
 .gg-navbar {
     background: linear-gradient(95deg, #3d7c58 0%, #5fa07c 52%, #8fc9a7 100%);
     box-shadow: 0 4px 14px rgba(79, 116, 96, 0.2);
@@ -43,6 +49,32 @@ body {
 
 .gg-sidebar {
     backdrop-filter: blur(6px);
+}
+
+/* Keep sidebar scroll behavior and style the scrollbar to match the sidebar theme. */
+#menuPanel {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(232, 255, 243, 0.55) rgba(12, 48, 34, 0.2);
+}
+
+#menuPanel::-webkit-scrollbar {
+    width: 9px;
+    height: 9px;
+}
+
+#menuPanel::-webkit-scrollbar-track {
+    background: rgba(12, 48, 34, 0.2);
+    border-radius: 999px;
+}
+
+#menuPanel::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(202, 247, 223, 0.9), rgba(116, 198, 157, 0.95));
+    border-radius: 999px;
+    border: 2px solid rgba(12, 48, 34, 0.18);
+}
+
+#menuPanel::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(222, 252, 235, 0.95), rgba(142, 215, 180, 0.95));
 }
 
 @media (max-width: 767px) {
@@ -398,6 +430,51 @@ body {
     border: 1px solid #e9f1eb;
 }
 
+.gg-home-hero {
+    background: linear-gradient(125deg, #edf6f0 0%, #e2f1e7 42%, #d4eadc 100%);
+    border: 1px solid #d7eadf;
+    box-shadow: var(--gg-shadow);
+}
+
+.gg-home-hero-film {
+    background:
+        radial-gradient(ellipse 68% 55% at 84% 10%, rgba(64, 145, 108, 0.22), transparent 72%),
+        radial-gradient(ellipse 45% 40% at 18% 75%, rgba(39, 88, 63, 0.15), transparent 70%),
+        repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.18) 0, rgba(255, 255, 255, 0.18) 2px, transparent 2px, transparent 16px);
+    pointer-events: none;
+}
+
+.gg-home-feature-card,
+.gg-home-step-card,
+.gg-home-device {
+    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.gg-home-feature-card:hover,
+.gg-home-step-card:hover,
+.gg-home-device:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 0.85rem 1.6rem rgba(127, 156, 140, 0.2);
+}
+
+.gg-home-step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 55%, #74c69d 100%);
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 800;
+    box-shadow: 0 10px 24px rgba(74, 125, 95, 0.22);
+}
+
+.gg-home-device-screen {
+    background: linear-gradient(180deg, #ffffff 0%, #f6fbf8 100%);
+}
+
 .gg-report-gallery-danger {
     border-top: 4px solid #dc2626;
 }
@@ -582,6 +659,25 @@ body {
     background: rgba(255, 255, 255, 0.88);
     border-radius: 12px;
     overflow: hidden;
+}
+
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.form-inline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-inline .form-control,
+.form-inline .custom-select {
+    width: auto;
+    min-width: 9rem;
 }
 
 .gg-contact-brand {
@@ -926,6 +1022,10 @@ small {
     padding: 0.4rem;
 }
 
+.table-responsive>.table {
+    min-width: 720px;
+}
+
 .badge {
     display: inline-block;
     border-radius: 999px;
@@ -1208,5 +1308,37 @@ small {
 
     .gg-coordinate-fields {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 767px) {
+    #menuPanel {
+        max-height: calc(100vh - 88px);
+        overflow-y: auto;
+    }
+
+    .table-responsive>.table,
+    .overflow-x-auto>table {
+        min-width: 640px;
+    }
+
+    .form-inline {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .form-inline .form-control,
+    .form-inline .custom-select,
+    .form-inline .btn {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .form-inline .mr-2 {
+        margin-right: 0;
+    }
+
+    .card-body.table-responsive {
+        padding: 0.75rem;
     }
 }
