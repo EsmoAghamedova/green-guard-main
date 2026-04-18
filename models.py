@@ -5,6 +5,9 @@ from flask_login import UserMixin
 from extensions import db
 
 
+VERIFICATION_STATUSES = {"approved", "pending", "rejected"}
+
+
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -12,9 +15,20 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(30), default="individual", nullable=False)
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
+    verification_status = db.Column(
+        db.String(20), default="approved", nullable=False
+    )
+    verified_at = db.Column(db.DateTime)
+    verified_by_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     created_at = db.Column(
         db.DateTime, default=datetime.utcnow, nullable=False)
 
+    verified_by = db.relationship(
+        "User",
+        remote_side=[id],
+        foreign_keys=[verified_by_id],
+        post_update=True,
+    )
     tree_records = db.relationship(
         "TreeRecord", backref="user", lazy=True, cascade="all, delete-orphan"
     )
@@ -33,6 +47,14 @@ class User(UserMixin, db.Model):
     merch_purchases = db.relationship(
         "MerchPurchase", backref="user", lazy=True, cascade="all, delete-orphan"
     )
+
+    @property
+    def requires_verification(self) -> bool:
+        return self.role in {"business", "volunteer"} and not self.is_admin
+
+    @property
+    def is_verified(self) -> bool:
+        return self.is_admin or not self.requires_verification or self.verification_status == "approved"
 
 
 class TreeRecord(db.Model):

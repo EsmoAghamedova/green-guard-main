@@ -1,3 +1,4 @@
+from datetime import datetime
 from functools import wraps
 from collections import defaultdict
 
@@ -27,6 +28,15 @@ def admin_required(view_func):
 @admin_required
 def dashboard():
     users = User.query.order_by(User.created_at.desc()).all()
+    pending_verifications = (
+        User.query.filter(
+            User.is_admin.is_(False),
+            User.role.in_(["business", "volunteer"]),
+            User.verification_status != "approved",
+        )
+        .order_by(User.created_at.desc())
+        .all()
+    )
     tree_records = TreeRecord.query.order_by(
         TreeRecord.created_at.desc()).all()
     reports = CuttingReport.query.order_by(
@@ -64,6 +74,7 @@ def dashboard():
     return render_template(
         "admin/dashboard.html",
         users=users,
+        pending_verifications=pending_verifications,
         tree_records=tree_records,
         reports=reports,
         campaigns=campaigns,
@@ -81,6 +92,36 @@ def dashboard():
 def users():
     all_users = User.query.order_by(User.created_at.desc()).all()
     return render_template("admin/users.html", users=all_users)
+
+
+@admin_bp.route("/admin/user/<int:user_id>/verification", methods=["POST"])
+@login_required
+@admin_required
+def update_user_verification(user_id):
+    user = User.query.get_or_404(user_id)
+    if user.is_admin:
+        flash("Admin accounts are always verified.", "warning")
+        return redirect(url_for("admin.users"))
+
+    new_status = request.form.get(
+        "verification_status", "pending").strip().lower()
+    valid_statuses = {"approved", "pending", "rejected"}
+
+    if new_status not in valid_statuses:
+        flash("Invalid verification status.", "danger")
+        return redirect(url_for("admin.users"))
+
+    user.verification_status = new_status
+    if new_status == "approved":
+        user.verified_at = datetime.utcnow()
+        user.verified_by_id = current_user.id
+    else:
+        user.verified_at = None
+        user.verified_by_id = None
+
+    db.session.commit()
+    flash(f"{user.username}'s verification status updated.", "success")
+    return redirect(url_for("admin.users"))
 
 
 @admin_bp.route("/admin/report/<int:report_id>/status", methods=["POST"])

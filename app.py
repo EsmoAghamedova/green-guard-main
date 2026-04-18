@@ -4,6 +4,7 @@ from flask import Flask, flash, redirect, request, url_for
 from flask_login import current_user
 from werkzeug.security import generate_password_hash
 from extensions import db, login_manager
+from permissions import is_user_verified
 
 
 def create_app() -> Flask:
@@ -54,6 +55,17 @@ def create_app() -> Flask:
     @app.before_request
     def restrict_admin_navigation():
         if not current_user.is_authenticated or not current_user.is_admin:
+            if current_user.is_authenticated and not current_user.is_admin and not is_user_verified(current_user):
+                endpoint = request.endpoint
+                allowed_endpoints = {
+                    "auth.logout",
+                    "auth.settings",
+                    "auth.verification_pending",
+                    "static",
+                }
+                if endpoint not in allowed_endpoints:
+                    return redirect(url_for("auth.verification_pending"))
+
             return None
 
         endpoint = request.endpoint
@@ -106,6 +118,7 @@ def ensure_admin_user(user_model) -> None:
         email=admin_email,
         password_hash=generate_password_hash(admin_password),
         is_admin=True,
+        verification_status="approved",
     )
     db.session.add(admin_user)
     db.session.commit()
@@ -115,6 +128,9 @@ def ensure_user_schema_columns(app: Flask) -> None:
     # Keep backward compatibility for existing SQLite databases without migrations.
     required_columns = {
         "role": "TEXT DEFAULT 'individual'",
+        "verification_status": "TEXT DEFAULT 'approved'",
+        "verified_at": "DATETIME",
+        "verified_by_id": "INTEGER",
     }
 
     with db.engine.begin() as connection:
@@ -132,11 +148,15 @@ def ensure_user_schema_columns(app: Flask) -> None:
             connection.exec_driver_sql(
                 f"ALTER TABLE user ADD COLUMN {column_name} {column_type}"
             )
-            connection.exec_driver_sql(
-                "UPDATE user SET role = 'individual' WHERE role IS NULL OR role = ''"
-            )
             app.logger.info(
                 "Added missing user column: %s", column_name)
+
+        connection.exec_driver_sql(
+            "UPDATE user SET role = 'individual' WHERE role IS NULL OR role = ''"
+        )
+        connection.exec_driver_sql(
+            "UPDATE user SET verification_status = 'approved' WHERE verification_status IS NULL OR verification_status = ''"
+        )
 
         # Citizen role has been removed. Normalize existing accounts to volunteer.
         connection.exec_driver_sql(

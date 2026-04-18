@@ -22,7 +22,9 @@
               <th>Username</th>
               <th>Email</th>
               <th>Role</th>
+              <th>Verification</th>
               <th>Joined</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>
@@ -38,11 +40,40 @@
                     <span class="badge badge-secondary">{{ user.role|replace('_', ' ')|title }}</span>
                   {% endif %}
                 </td>
+                <td>
+                  {% if user.is_admin %}
+                    <span class="badge badge-warning">Approved</span>
+                  {% elif user.verification_status == 'approved' %}
+                    <span class="badge badge-success">Approved</span>
+                  {% elif user.verification_status == 'rejected' %}
+                    <span class="badge badge-danger">Rejected</span>
+                  {% else %}
+                    <span class="badge badge-warning">Pending</span>
+                  {% endif %}
+                </td>
                 <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                <td>
+                  {% if user.is_admin %}
+                    <span class="text-muted small">Managed by system</span>
+                  {% else %}
+                    <form method="POST" action="{{ url_for('admin.update_user_verification', user_id=user.id) }}" class="form-inline">
+                      <select name="verification_status" class="form-control form-control-sm mr-2">
+                        {% for status in ['approved', 'pending', 'rejected'] %}
+                          {% if status == user.verification_status %}
+                            <option value="{{ status }}" selected>{{ status|title }}</option>
+                          {% else %}
+                            <option value="{{ status }}">{{ status|title }}</option>
+                          {% endif %}
+                        {% endfor %}
+                      </select>
+                      <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                    </form>
+                  {% endif %}
+                </td>
               </tr>
             {% else %}
               <tr>
-                <td colspan="5" class="text-center text-muted">No users available.</td>
+                <td colspan="7" class="text-center text-muted">No users available.</td>
               </tr>
             {% endfor %}
           </tbody>

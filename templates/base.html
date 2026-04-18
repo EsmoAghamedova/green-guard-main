@@ -113,6 +113,17 @@
                 <li>
                   <a class="gg-nav-link" href="{{ url_for('auth.register') }}"><i class="fas fa-user-plus"></i> Register</a>
                 </li>
+              {% elif not current_user.is_verified %}
+                <li class="px-3 pt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">Account</li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('auth.verification_pending') }}"><i class="fas fa-user-shield"></i> Verification Status</a>
+                </li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('auth.settings') }}"><i class="fas fa-sliders-h"></i> Settings</a>
+                </li>
+                <li>
+                  <a class="gg-nav-link" href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                </li>
               {% elif current_user.role == 'volunteer' %}
                 <li class="px-3 pt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">Main</li>
                 <li>

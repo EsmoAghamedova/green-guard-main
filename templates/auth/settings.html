@@ -35,6 +35,7 @@
               <div class="form-group">
                 {{ form.role.label }}
                 {{ form.role(class='form-control') }}
+                <small class="form-text text-muted">Changing to Business or Volunteer will send the account back to admin review.</small>
                 {% for error in form.role.errors %}
                   <small class="text-danger d-block">{{ error }}</small>
                 {% endfor %}
