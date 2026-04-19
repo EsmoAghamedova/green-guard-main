@@ -86,6 +86,20 @@ def create_app() -> Flask:
                 "Admin access is limited to Dashboard, Finance, Profile, and Settings.", "warning")
         return redirect(url_for("admin.dashboard"))
 
+    @app.context_processor
+    def inject_media_url_helper():
+        def media_url(filename: str | None) -> str:
+            if not filename:
+                return ""
+
+            normalized_filename = filename.replace("\\", "/")
+            if normalized_filename.startswith(("images/", "uploads/")) or "/" in normalized_filename:
+                return url_for("static", filename=normalized_filename)
+
+            return url_for("static", filename=f"uploads/{normalized_filename}")
+
+        return {"media_url": media_url}
+
     with app.app_context():
         from models import User
 

@@ -173,6 +173,12 @@ You can override with env vars before startup:
 - `ADMIN_EMAIL`
 - `ADMIN_PASSWORD`
 
+There is also a dedicated judge demo admin account seeded for review flows:
+
+- Username: `judge_admin`
+- Email: `judge_admin@example.com`
+- Password: `JudgeAdmin@123`
+
 ## 9.2 Recommended Demo Accounts
 
 Create these from Register page:
@@ -195,12 +201,19 @@ Create these from Register page:
    - Role: `Individual Sponsor`
    - Password: `JudgeDemo@123`
 
+4. Judge Admin
+   - Username: `judge_admin`
+   - Email: `judge_admin@example.com`
+   - Role: `Admin`
+   - Password: `JudgeAdmin@123`
+
 Admin approval step:
 
 1. Log in as admin.
 2. Go to Admin -> Users.
 3. Set Volunteer and Business to `Approved`.
 4. Sponsor/Individual can operate immediately.
+5. Use `judge_admin` when you want to demo admin-only review flows without the default admin login.
 
 ## 10. How to Use the Site (Judge-Oriented)
 
@@ -245,7 +258,7 @@ Admin approval step:
 
 ## 13. Optional: Add Sample Environmental Records
 
-To seed sample trees/reports for map/testing:
+To seed sample trees/reports and the judge demo accounts listed above:
 
 ```bash
 python seed_test_data.py

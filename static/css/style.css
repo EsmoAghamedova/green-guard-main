@@ -612,15 +612,38 @@ video {
 }
 
 .gg-gallery-thumb {
+    display: block;
+    width: 100%;
     height: 220px;
     object-fit: cover;
+    background: #f3f7f4;
 }
 
 .gg-detail-image {
+    display: block;
     width: 100%;
     max-height: 520px;
     object-fit: cover;
     border-radius: 14px;
+}
+
+.gg-report-gallery-card .gg-gallery-thumb,
+.gg-report-detail-card .gg-detail-image {
+    aspect-ratio: 16 / 10;
+}
+
+.gg-report-detail-card .card-body {
+    padding: 1.35rem 1.4rem 1.45rem;
+}
+
+.gg-report-gallery-card .card-body {
+    padding: 1rem 1rem 1.1rem;
+}
+
+@media (max-width: 767px) {
+    .gg-gallery-thumb {
+        height: 180px;
+    }
 }
 
 .btn,

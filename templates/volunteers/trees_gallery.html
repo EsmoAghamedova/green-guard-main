@@ -23,10 +23,10 @@
               {% if tree.image_filename %}
                 {% if tree.image_filename.lower().endswith('.mp4') or tree.image_filename.lower().endswith('.mov') or tree.image_filename.lower().endswith('.webm') %}
                   <video controls class="card-img-top gg-gallery-thumb">
-                    <source src="{{ url_for('static', filename='uploads/' ~ tree.image_filename) }}" />Your browser does not support video playback.
+                    <source src="{{ media_url(tree.image_filename) }}" />Your browser does not support video playback.
                   </video>
                 {% else %}
-                  <img src="{{ url_for('static', filename='uploads/' ~ tree.image_filename) }}" class="card-img-top gg-gallery-thumb" alt="Tree planting image" />
+                  <img src="{{ media_url(tree.image_filename) }}" class="card-img-top gg-gallery-thumb" alt="Tree planting image" />
                 {% endif %}
               {% else %}
                 <div class="card-img-top gg-gallery-thumb d-flex align-items-center justify-content-center bg-light text-muted">No image uploaded</div>

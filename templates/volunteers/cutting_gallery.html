@@ -21,7 +21,7 @@
           <div class="col-md-6 col-lg-4 mb-4">
             <article class="card h-100 shadow-sm gg-gallery-card gg-report-gallery-card gg-report-gallery-danger">
               {% if report.image_filename %}
-                <img src="{{ url_for('static', filename='uploads/' ~ report.image_filename) }}" class="card-img-top gg-gallery-thumb" alt="Cutting report image" />
+                <img src="{{ media_url(report.image_filename) }}" class="card-img-top gg-gallery-thumb" alt="Cutting report image" />
               {% else %}
                 <div class="card-img-top gg-gallery-thumb d-flex align-items-center justify-content-center bg-light text-muted">No image uploaded</div>
               {% endif %}
