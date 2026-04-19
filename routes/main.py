@@ -275,7 +275,6 @@ def _load_country_sync_points() -> list[dict]:
 
 
 def _tile_center_lat_lng(tile_x: int, tile_y: int, zoom: int) -> tuple[float, float]:
-    # Calculate Web Mercator tile center coordinates for full-world grid querying.
     scale = 2 ** zoom
     lon_deg = ((tile_x + 0.5) / scale) * 360.0 - 180.0
     n = math.pi - (2.0 * math.pi * (tile_y + 0.5) / scale)
@@ -332,7 +331,6 @@ def _load_worldwide_sync_points() -> list[dict]:
     for point in merged_points:
         point["zoom"] = world_zoom
 
-    # Lower zoom broadens API coverage to return global alert clusters.
     return merged_points
 
 
@@ -411,7 +409,6 @@ def _serialize_location(location: GFWLocation) -> dict:
 
 
 def _build_fallback_location_payload() -> list[dict]:
-    # Fallback markers keep deforestation zones visible when API sync has not populated DB yet.
     fallback_locations = []
     for index, point in enumerate(GFW_GLOBAL_HOTSPOT_SYNC_POINTS, start=1):
         fallback_locations.append(
@@ -446,7 +443,6 @@ def _get_map_locations_payload() -> list[dict]:
 
 
 def calculate_donation_points(category: str, quantity: int, amount: float) -> int:
-    # Weighted scoring: plants get highest eco impact, tools next, travel support still rewarded.
     quantity_multipliers = {
         "plants": 10,
         "tools": 7,
@@ -574,7 +570,6 @@ def sync_gfw_locations(force: bool = False) -> dict:
                     created_count += 1
                     sync_point_changed = True
                 except IntegrityError:
-                    # Another process may have inserted the same alert key in parallel.
                     location = GFWLocation.query.filter_by(
                         unique_key=unique_key).first()
                     if location is None:
@@ -628,7 +623,6 @@ def sync_gfw_locations(force: bool = False) -> dict:
                     sync_point.get("country_code"),
                 )
 
-        # Small pacing delay reduces DNS/network instability during global sweeps.
         time.sleep(0.1)
 
     if fetched_any_alerts:
@@ -1304,9 +1298,7 @@ def _calculate_tree_impact(tree_records: list[TreeRecord]) -> dict:
     else:
         cooling_effect = "Plant trees to start generating local cooling benefits"
 
-    # Approximate passenger car emissions around 0.192 kg CO2 per km.
     equivalent_car_km = co2_absorbed_kg / 0.192 if co2_absorbed_kg > 0 else 0.0
-    # Approximate annual per-person footprint around 4,600 kg CO2.
     equivalent_person_years = co2_absorbed_kg / \
         4600.0 if co2_absorbed_kg > 0 else 0.0
 
@@ -2262,7 +2254,6 @@ def search_location():
         return jsonify({"results": []})
 
     try:
-        # Use Nominatim API to search for locations
         nominatim_url = "https://nominatim.openstreetmap.org/search"
         params = {
             "q": query,
@@ -2273,7 +2264,6 @@ def search_location():
 
         url = f"{nominatim_url}?{urlencode(params)}"
 
-        # Add User-Agent header as requested by Nominatim
         req = Request(url, headers={"User-Agent": "Green-Guard-App"})
 
         with urlopen(req, timeout=5) as response:
@@ -2297,5 +2287,4 @@ def search_location():
             return jsonify({"results": results})
 
     except (HTTPError, URLError, ValueError, json.JSONDecodeError, Exception):
-        # Return empty results on any error
         return jsonify({"results": []})

@@ -52,7 +52,6 @@ def register():
                 db.session.rollback()
                 is_locked = "database is locked" in str(error).lower()
                 if is_locked and attempt == 0:
-                    # Brief retry handles transient SQLite writer contention.
                     time.sleep(0.35)
                     db.session.add(user)
                     continue

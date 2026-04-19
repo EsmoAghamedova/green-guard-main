@@ -51,7 +51,6 @@ video {
     backdrop-filter: blur(6px);
 }
 
-/* Keep sidebar scroll behavior and style the scrollbar to match the sidebar theme. */
 #menuPanel {
     scrollbar-width: thin;
     scrollbar-color: rgba(232, 255, 243, 0.55) rgba(12, 48, 34, 0.2);
@@ -1137,7 +1136,6 @@ small {
     padding-bottom: 3rem;
 }
 
-/* Location Search Component Styles */
 .gg-location-search-container {
     position: relative;
     margin-bottom: 1.5rem;

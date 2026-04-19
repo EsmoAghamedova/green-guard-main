@@ -1,5 +1,4 @@
 (function () {
-    // Initialize location search components on page load
     document.addEventListener("DOMContentLoaded", function () {
         initializeLocationSearch();
     });
@@ -21,7 +20,6 @@
 
             if (!latitudeField || !longitudeField) return;
 
-            // Add input listener for location search
             let searchTimeout;
             searchInput.addEventListener("input", function () {
                 clearTimeout(searchTimeout);
@@ -42,7 +40,6 @@
                 }, 300);
             });
 
-            // Handle result selection
             if (resultsContainer) {
                 resultsContainer.addEventListener("click", function (e) {
                     const resultItem = e.target.closest("[data-result-item]");
@@ -69,7 +66,6 @@
                 });
             }
 
-            // Handle GPS button
             if (gpsButton) {
                 if (!navigator.geolocation) {
                     gpsButton.disabled = true;
@@ -89,7 +85,6 @@
                 });
             }
 
-            // Close results when clicking outside
             document.addEventListener("click", function (e) {
                 if (!e.target.closest(".gg-location-search-container") &&
                     !e.target.closest("[data-location-search-wrapper]")) {
@@ -215,6 +210,5 @@
         return div.innerHTML;
     }
 
-    // Expose initialization function globally if needed
     window.reinitializeLocationSearch = initializeLocationSearch;
 })();

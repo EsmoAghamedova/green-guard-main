@@ -203,7 +203,7 @@
       line-height: 1.15;
       margin-bottom: 24px;
     }
-
+    
     .about-page .section-subtitle {
       font-family: 'Outfit', ui-sans-serif, system-ui;
       color: var(--forest);
@@ -615,8 +615,8 @@
     }
     
     .about-page .team-avatar {
-      width: 88px;
-      height: 88px;
+      width: 98px;
+      height: 98px;
       border-radius: 50%;
       margin: 0 auto 14px;
       display: flex;
@@ -627,6 +627,23 @@
       font-weight: 700;
       color: white;
       background: var(--mid);
+    }
+    
+    .about-page .team-avatar-photo {
+      position: relative;
+      overflow: hidden;
+      background: #dfeee4;
+      border: 3px solid rgba(255, 255, 255, 0.88);
+      box-shadow: 0 10px 24px rgba(12, 35, 24, 0.16);
+    }
+    
+    .about-page .team-avatar-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 35%;
+      transform: scale(1.08);
+      display: block;
     }
     
     .about-page .team-avatar.v2 {
@@ -733,70 +750,70 @@
         margin: 0 auto 1rem;
         border-radius: 0 0 0.75rem 0.75rem;
       }
-
+    
       .about-page .hero {
         min-height: 76vh;
       }
-
+    
       .about-page .hero-content {
         padding: 56px 18px 46px;
       }
-
+    
       .about-page h1 {
         font-size: clamp(40px, 14vw, 64px);
         letter-spacing: -1px;
         margin-bottom: 18px;
       }
-
+    
       .about-page .hero-sub {
         font-size: 15px;
         margin-bottom: 26px;
       }
-
+    
       .about-page .hero-cta {
         width: 100%;
         text-align: center;
         padding: 13px 18px;
       }
-
+    
       .about-page .leaf:nth-of-type(n + 3) {
         display: none;
       }
-
+    
       .about-page .wrap {
         padding: 0 16px;
       }
-
+    
       .about-page .section {
         padding: 56px 0;
       }
-
+    
       .about-page .lead {
         font-size: 16px;
       }
-
+    
       .about-page p {
         font-size: 15px;
         line-height: 1.7;
       }
-
+    
       .about-page .section-subtitle {
         font-size: 19px;
         margin: 30px 0 14px;
       }
-
+    
       .about-page .stat-grid,
       .about-page .cause-grid,
       .about-page .team-grid,
       .about-page .donut-row {
         grid-template-columns: 1fr;
       }
-
+    
       .about-page .chart-section,
       .about-page .sources-box {
         padding: 18px;
       }
-
+    
       .about-page .bar-row {
         flex-direction: column;
         align-items: stretch;
@@ -808,43 +825,43 @@
         text-align: left;
         font-size: 12px;
       }
-
+    
       .about-page .bar-fill {
         font-size: 11px;
       }
-
+    
       .about-page .timeline {
         padding-left: 22px;
       }
-
+    
       .about-page .timeline::before {
         left: 3px;
       }
-
+    
       .about-page .tl-item::before {
         left: -19px;
       }
-
+    
       .about-page .feature-row {
         grid-template-columns: 1fr;
         gap: 8px;
         padding: 22px 0;
       }
-
+    
       .about-page .feature-num {
         font-size: 26px;
         padding-top: 0;
       }
-
+    
       .about-page .sdg-badge {
         min-width: 100%;
         padding: 12px 14px;
       }
-
+    
       .about-page .pullquote {
         padding: 16px 14px;
       }
-
+    
       .about-page .pullquote p {
         font-size: 16px;
       }
@@ -957,7 +974,9 @@
             <div class="team-role">Technology · Product Design</div>
           </div>
           <div class="team-card">
-            <div class="team-avatar v4">E</div>
+            <div class="team-avatar team-avatar-photo v4">
+              <img src="{{ url_for('static', filename='images/members/Esmira.jpg') }}" alt="Esmira" />
+            </div>
             <div class="team-name">Esmira</div>
             <div class="team-role">Technology · Web Design</div>
           </div>

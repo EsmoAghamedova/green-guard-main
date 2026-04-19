@@ -139,7 +139,6 @@ def ensure_admin_user(user_model) -> None:
 
 
 def ensure_user_schema_columns(app: Flask) -> None:
-    # Keep backward compatibility for existing SQLite databases without migrations.
     required_columns = {
         "role": "TEXT DEFAULT 'individual'",
         "verification_status": "TEXT DEFAULT 'approved'",
@@ -172,14 +171,12 @@ def ensure_user_schema_columns(app: Flask) -> None:
             "UPDATE user SET verification_status = 'approved' WHERE verification_status IS NULL OR verification_status = ''"
         )
 
-        # Citizen role has been removed. Normalize existing accounts to volunteer.
         connection.exec_driver_sql(
             "UPDATE user SET role = 'volunteer' WHERE role = 'citizen'"
         )
 
 
 def ensure_gfw_schema_columns(app: Flask) -> None:
-    # Keep backward compatibility for existing SQLite databases without migrations.
     required_columns = {
         "country_code": "TEXT",
         "country_name": "TEXT",
@@ -206,7 +203,6 @@ def ensure_gfw_schema_columns(app: Flask) -> None:
 
 
 def ensure_support_donation_schema_columns(app: Flask) -> None:
-    # Keep backward compatibility for existing SQLite databases without migrations.
     required_columns = {
         "donation_item": "TEXT DEFAULT 'plants:oak_saplings'",
         "quantity": "INTEGER DEFAULT 1",
@@ -233,7 +229,6 @@ def ensure_support_donation_schema_columns(app: Flask) -> None:
 
 
 def ensure_campaign_schema_columns(app: Flask) -> None:
-    # Keep backward compatibility for existing SQLite databases without migrations.
     required_columns = {
         "creator_user_id": "INTEGER",
         "target_trees": "INTEGER DEFAULT 100",
