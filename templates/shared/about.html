@@ -615,8 +615,8 @@
     }
     
     .about-page .team-avatar {
-      width: 98px;
-      height: 98px;
+      width: 112px;
+      height: 112px;
       border-radius: 50%;
       margin: 0 auto 14px;
       display: flex;
@@ -959,17 +959,23 @@
 
         <div class="team-grid">
           <div class="team-card">
-            <div class="team-avatar">A</div>
+            <div class="team-avatar team-avatar-photo">
+              <img src="{{ url_for('static', filename='images/members/Ana.jpg') }}" alt="Ana" />
+            </div>
             <div class="team-name">Ana</div>
             <div class="team-role">Technology</div>
           </div>
           <div class="team-card">
-            <div class="team-avatar v2">A</div>
+            <div class="team-avatar team-avatar-photo v2">
+              <img src="{{ url_for('static', filename='images/members/Anano.jpg') }}" alt="Anano" />
+            </div>
             <div class="team-name">Anano</div>
             <div class="team-role">Technology · Research</div>
           </div>
           <div class="team-card">
-            <div class="team-avatar v3">M</div>
+            <div class="team-avatar team-avatar-photo v3">
+              <img src="{{ url_for('static', filename='images/members/Mari.jpg') }}" alt="Mariami" />
+            </div>
             <div class="team-name">Mariami</div>
             <div class="team-role">Technology · Product Design</div>
           </div>
