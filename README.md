@@ -12,6 +12,11 @@ It combines:
 
 This repository is prepared to help judges evaluate product quality, technical structure, and real-world usability quickly.
 
+Project links:
+
+- Repository: [https://github.com/EsmoAghamedova/green-guard-main](https://github.com/EsmoAghamedova/green-guard-main)
+- Live deployment: [https://green-guard-vqfo.onrender.com/](https://green-guard-vqfo.onrender.com/)
+
 ## 1. Competition Pitch
 
 Deforestation platforms often fail because trust and execution are disconnected.
